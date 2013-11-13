@@ -1,2 +1,1 @@
-stress-testsuite
-================
+# Grinder load tests
