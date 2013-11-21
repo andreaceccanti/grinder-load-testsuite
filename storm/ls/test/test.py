@@ -20,6 +20,7 @@ SRM_HOST = props['storm.host']
 SRM_ENDPOINT = "https://%s" % SRM_HOST
 BASE_FILE_PATH=props['storm.ls.base_file_path']
 NUM_FILES=int(props['storm.ls.num_files'])
+NUM_SURLS=int(props['storm.ls.num_surls'])
 MAX_WAITING_TIME_IN_MSEC=int(props['storm.ls.max_waiting_time_in_msec'])
 
 SURL_PREFIX="srm://%s/%s" % (SRM_HOST, BASE_FILE_PATH)
@@ -43,15 +44,11 @@ class TestRunner:
         
         client = SRMClientFactory.newSRMClient(SRM_ENDPOINT, PROXY_FILE)
         
-        surl_range = range(1, random.randrange(NUM_FILES))
         surls = []
-        
-        for i in surl_range:
-            surls.append(SURL_PREFIX + "/f" + str(i))
+        for i in range(0, NUM_SURLS):
+            surls.append(SURL_PREFIX + "/f" + str(random.randrange(1, NUM_FILES + 1)))
         
         test.record(client)
-        
-        log("Listing %d surls..." % surl_range[-1])
         
         res = client.srmLs(surls,
                             MAX_WAITING_TIME_IN_MSEC)
