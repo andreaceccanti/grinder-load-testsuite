@@ -14,7 +14,7 @@ Load tests for StoRM are under the storm directory.
 ### Available tests
 
 * **PtG** 
-* **AtlasRenaming** tests the WebDAV file renaming algorithm used by Atlas, see [details]()
+* **AtlasRenaming** tests the WebDAV file renaming algorithm used by Atlas, see [details](https://github.com/italiangrid/grinder-load-testsuite/tree/master/storm/AtlasRenaming)
 * **ls** execute an [srmLs](https://sdm.lbl.gov/srm-wg/doc/SRM.v2.2.html#_Toc241633105), see [details](https://github.com/italiangrid/grinder-load-testsuite/tree/master/storm/ls) 
 
 ### Executing tests
