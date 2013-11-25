@@ -34,31 +34,30 @@ def setup_keymanager():
 def log_properties():
     log("PtG test configuration")
     for k in sorted(props.keys()):
-        log("%s : %s" %(k, props[k])) 
-            
-class TestRunner:    
-    def __call__(self):        
+        log("%s : %s" %(k, props[k]))
+
+class TestRunner:
+    def __call__(self):
         test = Test(2, "StoRM PTG")
-        
+
         client = SRMClientFactory.newSRMClient(SRM_ENDPOINT,PROXY_FILE)
-        surl_range = range(1,random.randrange(NUM_FILES))
+        surl_index = random.randint(1,NUM_FILES)
         surls = []
-        
-        for i in surl_range:
-            surls.append(SURL_PREFIX+"/f"+str(i))
-        
+
+        surls.append(SURL_PREFIX+"/f"+str(surl_index))
+
         test.record(client)
-        
-        log("Requesting %d surls..." % surl_range[-1])
-        
+
+        log("Requesting surl(s): " % surls)
+
         res = client.srmPTG(surls,
                             MAX_WAITING_TIME_IN_MSEC)
-        
-        log("ptg result: %s: %s" % (res.returnStatus.statusCode, 
+
+        log("ptg result: %s: %s" % (res.returnStatus.statusCode,
                                     res.returnStatus.explanation))
-        
-        statuses = res.getArrayOfFileStatuses().getStatusArray() 
-        
+
+        statuses = res.getArrayOfFileStatuses().getStatusArray()
+
         for s in statuses:
-            log("%s -> %s" %(s.getSourceSURL(), 
+            log("%s -> %s" %(s.getSourceSURL(),
                              s.getStatus().getStatusCode()))
