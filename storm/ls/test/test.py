@@ -40,7 +40,7 @@ def log_properties():
 class TestRunner:    
     def __call__(self):        
         
-        test = Test(1, "StoRM srmLs")
+        test = Test(4, "StoRM srmLs")
         
         client = SRMClientFactory.newSRMClient(SRM_ENDPOINT, PROXY_FILE)
         

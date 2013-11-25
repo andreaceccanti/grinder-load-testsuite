@@ -32,7 +32,7 @@ class TestRunner:
 		client = SRMClientFactory.newSRMClient(SRM_ENDPOINT,PROXY_FILE)
 		surl = SURL_PREFIX + "/" + randomword(15)
 
-		test = Test(1, "StoRM Mkdir")
+		test = Test(5, "StoRM Mkdir")
 		test.record(client)
 
 		log("Creating directory %s..." % surl)

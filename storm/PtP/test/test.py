@@ -61,7 +61,7 @@ class TestRunner:
 
     def __call__(self):
 
-	test=Test(1,"StoRM Put without file transfer")
+	test=Test(3,"StoRM Put without file transfer")
 	
 	request=PutRequest()
 	test.record(request)

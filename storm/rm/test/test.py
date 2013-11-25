@@ -50,7 +50,7 @@ class TestRunner:
         if not self.files:
             grinder.stopThisWorkerThread()
 
-        test = Test(1, "StoRM srmRm")
+        test = Test(8, "StoRM srmRm")
         
         client = SRMClientFactory.newSRMClient(SRM_ENDPOINT, PROXY_FILE)
         

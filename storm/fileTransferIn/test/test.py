@@ -74,7 +74,7 @@ class TestRunner:
 
 		req = FileTransferIn()
 		
-		test = Test(1, "StoRM file-transfer IN")
+		test = Test(6, "StoRM file-transfer IN")
 		test.record(req)
 
 		req()

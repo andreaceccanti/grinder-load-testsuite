@@ -66,7 +66,7 @@ class TestRunner:
 
 		req = Rmdir()
 		
-		test = Test(1, "StoRM Rmdir")
+		test = Test(9, "StoRM Rmdir")
 		test.record(req)
 
 		req()

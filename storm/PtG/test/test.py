@@ -38,7 +38,7 @@ def log_properties():
             
 class TestRunner:    
     def __call__(self):        
-        test = Test(1, "StoRM PTG")
+        test = Test(2, "StoRM PTG")
         
         client = SRMClientFactory.newSRMClient(SRM_ENDPOINT,PROXY_FILE)
         surl_range = range(1,random.randrange(NUM_FILES))

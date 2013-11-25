@@ -68,7 +68,7 @@ class TestRunner:
         
 		req = FileTransferOut()
 		
-		test = Test(1, "StoRM file-transfer OUT")
+		test = Test(7, "StoRM file-transfer OUT")
 		test.record(req)
         
 		req()
