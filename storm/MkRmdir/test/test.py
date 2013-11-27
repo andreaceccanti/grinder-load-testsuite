@@ -12,11 +12,11 @@ props = grinder.properties
 log = grinder.logger.info
 
 ## Test parameters fetched from environment vars
-PROXY_FILE = os.environ['X509_USER_PROXY']
 
 ## Test parameters as fetched from grinder.properties
-SRM_HOST = props['storm.fehost']
-BASE_FILE_PATH=props['storm.mkrmdir.base_file_path']
+PROXY_FILE = props['client.proxy']
+SRM_HOST = props['storm.host']
+BASE_FILE_PATH=props['storm.base_file_path']
 
 ## Computed vars
 SRM_ENDPOINT = "https://%s" % SRM_HOST
