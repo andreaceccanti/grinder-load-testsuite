@@ -19,27 +19,27 @@ debug = grinder.logger.debug
 
 props = grinder.properties
 
-def sptg(ptg_resp, client):
-    token = ptg_resp.requestToken
-    debug("SPTG for token: %s" % token )
+def sptp(ptp_resp, client):
+    token = ptp_resp.requestToken
+    debug("SPTP for token: %s" % token )
 
-    res = client.srmSPtG(ptg_resp)
-    log_surl_call_result("sptg",res)
+    res = client.srmSPtP(ptp_resp)
+    log_surl_call_result("sptp",res)
     return res
 
 class TestRunner:
-    def __call__(self, ptg_resp, client = None):
-        if ptg_resp is None:
-            raise Exception("Please set a non-null PtG response!")
+    def __call__(self, ptp_resp, client = None):
+        if ptp_resp is None:
+            raise Exception("Please set a non-null PtP response!")
 
         if client is None:
             raise Exception("Please set a non-null SRM client!")
 
-        test = Test(TestID.SPTG, "StoRM Status PTG")
-        test.record(sptg)
+        test = Test(TestID.SPTP, "StoRM Status PTP")
+        test.record(sptp)
 
         try:
-            return sptg(ptg_resp, client)
+            return sptp(ptp_resp, client)
         except Exception, e:
-            error("Error executing sptg: %s" % traceback.format_exc())
+            error("Error executing SPTP: %s" % traceback.format_exc())
             raise

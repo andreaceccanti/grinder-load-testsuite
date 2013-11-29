@@ -16,25 +16,25 @@ debug = grinder.logger.debug
 
 props = grinder.properties
 
+def ptg(surls, transport_protocols, client):
+    debug("Requesting surl(s): %s" % surls)
+
+    res = client.srmPtG(surls,
+                        transport_protocols)
+
+    log_surl_call_result("ptg", res)
+    debug("ptg done.")
+    return res
+
 class TestRunner:
-    def _run(self, surls, transport_protocols, client):
-        info("Requesting surl(s): %s" % surls)
-
-        res = client.srmPtG(surls,
-                            transport_protocols)
-
-        log_surl_call_result("ptg",res)
-        info("ptg done.")
-        return res
-
     def __call__(self, surls, transport_protocols, client):
         if client is None:
             raise Exception("Please set a non-null SRM client!")
 
         test = Test(TestID.PTG, "StoRM PTG")
-        test.record(self._run)
+        test.record(ptg)
         try:
-            return self._run(surls, transport_protocols, client)
+            return ptg(surls, transport_protocols, client)
         except Exception:
             error("Error executing ptg: %s" % traceback.format_exc())
             raise

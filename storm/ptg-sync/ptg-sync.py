@@ -15,6 +15,7 @@ import sptg
 import string
 import time
 import traceback
+import uuid
 
 ## This loads the base properties inside grinder properties
 ## Should be left at the top of the script execution
@@ -35,49 +36,114 @@ SURL_PREFIX    = "srm://%s/%s" % (FE_HOST, BASE_FILE_PATH)
 
 WAITING_STATES = [TStatusCode.SRM_REQUEST_QUEUED, TStatusCode.SRM_REQUEST_INPROGRESS]
 
+SRM_SUCCESS  = TStatusCode.SRM_SUCCESS
+
 # Start sleeping between sptg requests after this number
-SLEEP_THRESHOLD = 10
+SLEEP_THRESHOLD = int(props['ptg-sync.sleep_threshold'])
+
 ## Sleep time (seconds)
-SLEEP_TIME = .5
+SLEEP_TIME = float(props['ptg-sync.sleep_time'])
+
+## Perform an srmPing before running the test to
+## rule out the handshake time from the stats
+DO_HANDSHAKE = bool(props['ptg-sync.do_handshake'])
+
+## Number of files created in the ptg directory
+NUM_FILES = 50
 
 def status_code(resp):
     return resp.returnStatus.statusCode
 
-def compute_surls():
-    random_index = random.randint(1,10)
-    surl = "%s/f%d" % (SURL_PREFIX,random_index)
+def explanation(resp):
+    return resp.returnStatus.explanation
+
+def compute_surls(base_dir):
+    random_index = random.randint(1, NUM_FILES)
+    surl = "%s/f%d" % (base_dir, random_index)
     return [surl]
 
-class TestRunner:
-    def _run(self):
-        surls = compute_surls()
-        ptg_runner = ptg.TestRunner()
-        ptg_res = ptg_runner(surls,[],self._client)
-        sptg_runner = sptg.TestRunner()
+def check_success(res, msg):
+    if status_code(res) != SRM_SUCCESS:
+        error_msg = "%s. %s (expl: %s)" % (msg, status_code(res), explanation(res))
+        raise Exception(error_msg)
 
-        counter = 0
+def setup(client):
+    info("Setting up ptg-sync test.")
+    base_dir = "%s/%s" % (SURL_PREFIX, str(uuid.uuid4()))
+    info("Creating base dir: " + base_dir)
 
-        while True:
-            res =  sptg_runner(ptg_res,self._client)
-            counter = counter + 1
-            sc = status_code(res)
-            debug("sPtG invocation %d status code: %s" % (counter,sc) )
+    res = client.srmMkdir(base_dir)
+    check_success(res, "Error creating %s" % base_dir)
+    info("Base directory succesfully created.")
 
-            if sc not in WAITING_STATES:
-                break
-            else:
-                if counter > SLEEP_THRESHOLD:
-                    debug("Going to sleep for %d seconds" % SLEEP_TIME)
-                    time.sleep(SLEEP_TIME)
+    surls = []
 
-        info("SPTG result (after %d invocations): %s: %s" %
+    for i in range(0, NUM_FILES):
+        f_surl = "%s/f%d" % (base_dir, i)
+        if i == 0:
+            info("Creating surls like this: "+ f_surl)
+        surls.append(f_surl)
+
+    res = client.srmPtP(surls,[])
+    while True:
+        sres = client.srmSPtP(res)
+        if status_code(sres) in WAITING_STATES:
+            time.sleep(1)
+        else:
+            break
+
+    check_success(sres, "Error in PtP for surls (only 5 shown out of %d): %s." % (len(surls),surls[0:5]))
+    res = client.srmPd(surls, res.requestToken)
+    check_success(res, "Error in PD for surls: %s" % surls)
+    info("ptg-sync setup completed succesfully.")
+
+    return base_dir,surls
+
+def cleanup(client, base_dir):
+    info("Cleaning up for ptg-sync test.")
+
+    res = client.srmRmdir(base_dir, True)
+    if status_code(res) != SRM_SUCCESS:
+        raise Exception("srmRmdir failed for %s. %s %s" %(base_dir, status_code(res), explanation(res)))
+    info("ptg-sync cleanup completed succesfully.")
+
+def ptg_sync(client, base_dir):
+    surls = compute_surls(base_dir)
+    ptg_runner = ptg.TestRunner()
+    ptg_res = ptg_runner(surls, [], client)
+    sptg_runner = sptg.TestRunner()
+
+    counter = 0
+
+    while True:
+        res =  sptg_runner(ptg_res, client)
+        counter = counter + 1
+        sc = status_code(res)
+        debug("sPtG invocation %d status code: %s" % (counter, sc) )
+
+        if sc not in WAITING_STATES:
+            break
+        else:
+            if counter > SLEEP_THRESHOLD:
+                debug("Going to sleep for %f seconds" % SLEEP_TIME)
+                time.sleep(SLEEP_TIME)
+
+    debug("SPTG result (after %d invocations): %s: %s" %
             (counter, res.returnStatus.statusCode, res.returnStatus.explanation))
 
+class TestRunner:
     def __call__(self):
         try:
             test = Test(TestID.PTG_SYNC, "StoRM Sync PTG test")
-            test.record(self._run)
-            self._client = SRMClientFactory.newSRMClient(SRM_ENDPOINT,PROXY_FILE)
-            self._run()
+            test.record(ptg_sync)
+            client = SRMClientFactory.newSRMClient(SRM_ENDPOINT, PROXY_FILE)
+
+            if DO_HANDSHAKE:
+                client.srmPing();
+
+            (base_dir, surls) = setup(client)
+            ptg_sync(client, base_dir)
+            cleanup(client, base_dir)
+
         except Exception, e:
             error("Error executing ptg-sync: %s" % traceback.format_exc())

@@ -32,15 +32,15 @@ def setup_keymanager():
 def log_properties():
     log("PtG test configuration")
     for k in sorted(props.keys()):
-        log("%s : %s" %(k, props[k])) 
-            
-class TestRunner:    
+        log("%s : %s" %(k, props[k]))
 
-	def __call__(self):        
-        
+class TestRunner:
+
+	def __call__(self):
+
 		surls = []
 		for i in range(0, NUM_SURLS):
 			surls.append(SURL_PREFIX + "/f" + str(random.randrange(1, NUM_FILES + 1)))
-        
+
 			lsTestRunner = ls.TestRunner()
 			lsTestRunner(surls)

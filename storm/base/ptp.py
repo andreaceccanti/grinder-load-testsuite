@@ -1,7 +1,6 @@
 from common import TestID, log_surl_call_result
 from eu.emi.security.authn.x509.impl import PEMCredential
 from exceptions import Exception
-from gov.lbl.srm.StorageResourceManager import TStatusCode
 from jarray import array
 from java.io import FileInputStream
 from javax.net.ssl import X509ExtendedKeyManager
@@ -10,7 +9,6 @@ from net.grinder.script import Test
 from net.grinder.script.Grinder import grinder
 from org.italiangrid.srm.client import SRMClient, SRMClientFactory
 import random
-import time
 import traceback
 
 error = grinder.logger.error
@@ -19,27 +17,25 @@ debug = grinder.logger.debug
 
 props = grinder.properties
 
-def sptg(ptg_resp, client):
-    token = ptg_resp.requestToken
-    debug("SPTG for token: %s" % token )
+def ptp(surls, transport_protocols, client):
+    debug("PTP for surl(s): %s" % surls)
 
-    res = client.srmSPtG(ptg_resp)
-    log_surl_call_result("sptg",res)
+    res = client.srmPtP(surls,
+                        transport_protocols)
+
+    log_surl_call_result("ptp", res)
+    debug("ptp done.")
     return res
 
 class TestRunner:
-    def __call__(self, ptg_resp, client = None):
-        if ptg_resp is None:
-            raise Exception("Please set a non-null PtG response!")
-
+    def __call__(self, surls, transport_protocols, client):
         if client is None:
             raise Exception("Please set a non-null SRM client!")
 
-        test = Test(TestID.SPTG, "StoRM Status PTG")
-        test.record(sptg)
-
+        test = Test(TestID.PTP, "StoRM PTP")
+        test.record(ptp)
         try:
-            return sptg(ptg_resp, client)
-        except Exception, e:
-            error("Error executing sptg: %s" % traceback.format_exc())
+            return ptp(surls, transport_protocols, client)
+        except Exception:
+            error("Error executing ptp: %s" % traceback.format_exc())
             raise

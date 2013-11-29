@@ -1,14 +1,18 @@
 from java.util import Properties
 from java.io import FileInputStream, BufferedInputStream
 from net.grinder.script.Grinder import grinder
+from org.slf4j import Logger, LoggerFactory
 import os
 
 PROPERTIES = "common.properties"
 
+def get_logger(name):
+    return LoggerFactory.getLogger(name)
+
 def log_surl_call_result(op_name, res, logger=None):
 
     if logger is None:
-        logger = grinder.logger.info
+        logger = grinder.logger.debug
 
     logger("%s result: %s (expl: %s)" %
            (op_name, res.returnStatus.statusCode,
@@ -17,7 +21,12 @@ def log_surl_call_result(op_name, res, logger=None):
 
     logger("surl(s) statuses:")
     for s in statuses:
-        logger("%s -> %s" %(s.getSourceSURL(),
+        surl_attr_names = ["sourceSURL", "SURL", "surl"]
+        fn = [ x for x in surl_attr_names if x in dir(s) ]
+        if len(fn) == 0:
+            raise Exception("SURL access methods %s not found in %s: %s" % (s,surl_attr_names,dir(s)))
+        surl = getattr(s, fn[0])
+        logger("%s -> %s" %(surl,
                             s.getStatus().getStatusCode()))
 
 def load_common_properties():
@@ -45,7 +54,8 @@ class TestID():
     MV        = 9
     REL_FILES = 10
     TXFER_IN  = 11
-    TXFER_OUT = 10
+    TXFER_OUT = 12
+    PD        = 13
 
     PTG_SYNC  = 100
     PTP_SYNC  = 101
