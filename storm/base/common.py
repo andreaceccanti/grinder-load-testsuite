@@ -54,9 +54,10 @@ class TestID():
     MV        = 9
     REL_FILES = 10
     HTTP_GET  = 11
-    TXFER_OUT = 12
+    HTTP_PUT  = 12
     PD        = 13
 
     PTG_SYNC  = 100
     PTP_SYNC  = 101
     TXFER_IN  = 102
+    TXFER_OUT = 103
