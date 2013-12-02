@@ -112,8 +112,6 @@ def file_transfer_in(client,base_dir):
     
     protocols=[]
     protocols.append("http")
-    
-    #info("SURL: "+surls)
 	
     ptg_runner=ptg.TestRunner()
     ptg_res=ptg_runner(surls,protocols,client)

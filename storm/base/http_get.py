@@ -33,5 +33,5 @@ class TestRunner:
         try:
             return http_get(turls)
         except Exception:
-            error("Error executing transfer-in: %s" % traceback.format_exc())
+            error("Error executing HTTP GET: %s" % traceback.format_exc())
             raise
