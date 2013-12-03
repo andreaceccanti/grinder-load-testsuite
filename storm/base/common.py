@@ -61,3 +61,4 @@ class TestID():
     PTP_SYNC  = 101
     TXFER_IN  = 102
     TXFER_OUT = 103
+    MKRMDIR   = 104

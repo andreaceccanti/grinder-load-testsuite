@@ -1,39 +1,45 @@
+from common import TestID, log_surl_call_result
+from eu.emi.security.authn.x509.impl import PEMCredential
+from exceptions import Exception
+from jarray import array
+from java.io import FileInputStream
+from javax.net.ssl import X509ExtendedKeyManager
+from net.grinder.plugin.http import HTTPRequest
 from net.grinder.script import Test
 from net.grinder.script.Grinder import grinder
 from org.italiangrid.srm.client import SRMClient, SRMClientFactory
 import random
-import os
-import string
+import traceback
 
-# aliases for grinder stuff
+error = grinder.logger.error
+info = grinder.logger.info
+debug = grinder.logger.debug
+
 props = grinder.properties
-log = grinder.logger.info
 
-# test parameters as fetched from grinder.properties
-PROXY_FILE = props['client.proxy']
-FE_HOST = props['storm.host']
-BASE_FILE_PATH=props['storm.base_file_path']
+def mkdir(dirname, client):
+	
+	debug("Creating directory: %s" % dirname)
 
-# computed vars
-SRM_ENDPOINT = "https://%s" % FE_HOST
-SURL_PREFIX="srm://%s/%s" % (FE_HOST, BASE_FILE_PATH)
+	res= client.srmMkdir(dirname)
+
+	debug("Directory created")
+
+	return res
+	
 
 class TestRunner:
 
-	def __call__(self, dirname):
+	def __call__(self, dirname, client):
 
-		test = Test(105, "mkdir")
+		if client is None:
+			raise Exception("Please set a non-null SRM client!")
 
-		log("mkdir")
+		test = Test(TestID.MKDIR, "mkdir")
+		test.record(mkdir)
 		
-		surl = SURL_PREFIX + "/" + dirname
-
-		client = SRMClientFactory.newSRMClient(SRM_ENDPOINT, PROXY_FILE)
-
-		test.record(client)
-
-		res= client.srmMkdir(surl)
-
-		log("Result: %s %s" % (res.getReturnStatus().getStatusCode(), res.getReturnStatus().getExplanation()))
-
-		# test fails it is not an SRM_SUCCESS?
+		try:
+			return mkdir(dirname, client)
+		except Exception:
+			error("Error executing mkdir: %s" % traceback.format_exc())
+			raise		
