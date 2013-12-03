@@ -131,7 +131,7 @@ class TestRunner:
 				
 	def __call__(self):		
 		try:
-			test = Test(TestID.TXFER_IN, "StoRM file-transfer OUT")					
+			test = Test(TestID.TXFER_OUT, "StoRM file-transfer OUT")					
 			test.record(file_transfer_out)
 			client = SRMClientFactory.newSRMClient(SRM_ENDPOINT,PROXY_FILE)
 			
