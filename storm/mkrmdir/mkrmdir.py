@@ -9,7 +9,7 @@ from net.grinder.plugin.http import HTTPRequest
 from net.grinder.script import Test
 from net.grinder.script.Grinder import grinder
 from org.italiangrid.srm.client import SRMClient, SRMClientFactory
-import mkdir, rmdir
+import mkdir, rmdir, ls
 import random
 import string
 import time
@@ -51,9 +51,17 @@ def mkrmdir(client):
 	surl = compute_surl()
 
 	mkdir_runner = mkdir.TestRunner()
-	res = mkdir_runner(surl, client)
+	mkdir_res = mkdir_runner(surl, client)
 
-	if status_code(res) != TStatusCode.SRM_SUCCESS:
+	if status_code(mkdir_res) != TStatusCode.SRM_SUCCESS:
+		msg = "MkDir failure on surl: %s" % surl
+		error(msg)
+		raise Exception(msg)
+
+	ls_runner = ls.TestRunner()
+	ls_res = ls_runner(surl, client)
+
+	if status_code(ls_res) != TStatusCode.SRM_SUCCESS:
 		msg = "MkDir failure on surl: %s" % surl
 		error(msg)
 		raise Exception(msg)
