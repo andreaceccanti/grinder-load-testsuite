@@ -62,3 +62,4 @@ class TestID():
     TXFER_IN  = 102
     TXFER_OUT = 103
     MKRMDIR   = 104
+    ATLAS_RENAMING = 105
