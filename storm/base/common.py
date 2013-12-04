@@ -56,6 +56,9 @@ class TestID():
     HTTP_GET  = 11
     HTTP_PUT  = 12
     PD        = 13
+    HEAD      = 14
+    MKCOL     = 15
+    MOVE      = 16
 
     PTG_SYNC  = 100
     PTP_SYNC  = 101
