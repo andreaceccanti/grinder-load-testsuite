@@ -13,48 +13,26 @@ import traceback
 import os
 import commands
 
-# this loads the base properties inside grinder properties
-load_common_properties()
-
 error = grinder.logger.error
 info = grinder.logger.info
 debug = grinder.logger.debug
 
-props = grinder.properties
-
-PROXY_FILE = props['client.proxy']
-GLOBUS_DIR = os.environ['HOME'] + '/.globus'
-USERCERT = GLOBUS_DIR + '/usercert.pem'
-USERKEY = GLOBUS_DIR + '/userkey.pem'
-CACERTS = "/etc/grid-security/certificates"
-
-WEBDAV_HOST = props['atlas_ren.host']
-WEBDAV_PORT = props['atlas_ren.port']
-WEBDAV_ENDPOINT = "https://" + WEBDAV_HOST + ":" + WEBDAV_PORT + "/webdav"
-
-def execute(command):
-	output = commands.getoutput(command)
-	return output
-
-def getCurlOptions():
-	return "--cert " + PROXY_FILE + " --cacert " + USERCERT + " --capath " + CACERTS
-
-def getDavURL(vo, remotepath):
-	return WEBDAV_ENDPOINT + "/" + vo + "/" + remotepath
-
-def head(vo, remotepath):
-	debug("HEAD %s " % remotepath)
-	return execute("curl " + getCurlOptions() + " --head " + getDavURL(vo, remotepath))
+def head(url, client):
+	debug("HEAD %s " % url)
+	client.head(url)
 
 class TestRunner:
 
-	def __call__(self, vo, remotepath):
+	def __call__(self, url, client):
+
+		if client is None:
+			raise Exception("Please set a non-null WebDAV client!")
 
 		test = Test(TestID.HEAD, "HEAD")
 		test.record(head)
 
 		try:
-			return head(vo, remotepath)
+			return head(url, client)
 		except Exception:
 			error("Error executing HEAD: %s" % traceback.format_exc())
 			raise
