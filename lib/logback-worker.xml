@@ -36,7 +36,7 @@
 
   </appender>
 
-  <logger name="worker" additivity="false" level="info">
+  <logger name="worker" additivity="false" level="debug">
     <appender-ref ref="log-file" />
   </logger>
 

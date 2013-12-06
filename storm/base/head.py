@@ -18,21 +18,21 @@ info = grinder.logger.info
 debug = grinder.logger.debug
 
 def head(url, client):
-	debug("HEAD %s " % url)
-	client.head(url)
+    debug("HEAD %s " % url)
+    client.head(url)
 
 class TestRunner:
 
-	def __call__(self, url, client):
+    def __call__(self, url, client):
 
-		if client is None:
-			raise Exception("Please set a non-null WebDAV client!")
+        if client is None:
+            raise Exception("Please set a non-null WebDAV client!")
 
-		test = Test(TestID.HEAD, "HEAD")
-		test.record(head)
+        test = Test(TestID.HEAD, "HEAD")
+        test.record(head)
 
-		try:
-			return head(url, client)
-		except Exception:
-			error("Error executing HEAD: %s" % traceback.format_exc())
-			raise
+        try:
+            return head(url, client)
+        except Exception:
+            error("Error executing HEAD: %s" % traceback.format_exc())
+            raise
