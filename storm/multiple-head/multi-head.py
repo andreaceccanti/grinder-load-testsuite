@@ -41,7 +41,7 @@ def multi_head(client):
 
     head_runner = head.TestRunner()
     for i in range(MULTIHEAD_COUNT):
-        head_runner("/f"+i, client)
+        head_runner("/f%d" % i, client)
 
 class TestRunner:
 
