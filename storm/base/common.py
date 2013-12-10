@@ -66,3 +66,4 @@ class TestID():
     TXFER_OUT = 103
     MKRMDIR   = 104
     ATLAS_RENAMING = 105
+    MULTI_HEAD = 106

@@ -18,7 +18,7 @@ info = grinder.logger.info
 debug = grinder.logger.debug
 
 def head(url, client):
-    debug("HEAD %s " % url)
+    debug("HEAD %s" % url)
     client.head(url)
 
 class TestRunner:

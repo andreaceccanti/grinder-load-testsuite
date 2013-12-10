@@ -18,7 +18,7 @@ info = grinder.logger.info
 debug = grinder.logger.debug
 
 def mkcol(url, client):
-	debug("MKCOL %s " % url)
+	debug("MKCOL %s" % url)
 	client.mkcol(url)
 
 class TestRunner:
