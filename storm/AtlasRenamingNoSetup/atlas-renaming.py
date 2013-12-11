@@ -38,13 +38,15 @@ def explanation(resp):
 
 def atlas_renaming(client):
 
+    agent_number = grinder.agentNumber
     process_number = grinder.processNumber
     thread_number = grinder.threadNumber
     run_number = grinder.runNumber
 
-    thread_prefix = "%s/p%d/t%d" % (BASE_FILE_PATH,
-                                    process_number,
-                                    thread_number)
+    thread_prefix = "%s/a%d/p%d/t%d" % (BASE_FILE_PATH,
+                                        agent_number,
+                                        process_number,
+                                        thread_number)
 
     src_file=  "%s/f%d" % (thread_prefix, run_number)
 
