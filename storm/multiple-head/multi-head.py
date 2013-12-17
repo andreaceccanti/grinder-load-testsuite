@@ -30,6 +30,9 @@ MULTIHEAD_PORT = props['multi_head.port']
 MULTIHEAD_COUNT = int(props['multi_head.count'])
 
 MULTIHEAD_ENDPOINT = "https://" + MULTIHEAD_HOST + ":" + MULTIHEAD_PORT
+PREFIX = "/webdav/testers.eu-emi.eu"
+
+HTTP_CLIENT = WebDAVClientFactory.newWebDAVClient(MULTIHEAD_ENDPOINT, PROXY_FILE)
 
 def status_code(resp):
     return resp.returnStatus.statusCode
@@ -41,7 +44,7 @@ def multi_head(client):
 
     head_runner = head.TestRunner()
     for i in range(MULTIHEAD_COUNT):
-        head_runner("/f%d" % i, client)
+        head_runner("%s/f%d" % (PREFIX,i), client)
 
 class TestRunner:
 
@@ -52,6 +55,4 @@ class TestRunner:
 
         debug("MULTIHEAD_ENDPOINT: %s" % MULTIHEAD_ENDPOINT)
 
-        http_client = WebDAVClientFactory.newWebDAVClient(MULTIHEAD_ENDPOINT, PROXY_FILE)
-
-        multi_head(http_client)
+        multi_head(HTTP_CLIENT)

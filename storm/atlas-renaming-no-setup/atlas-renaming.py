@@ -30,6 +30,8 @@ WEBDAV_HOST = props['atlas_ren.host']
 WEBDAV_PORT = props['atlas_ren.port']
 WEBDAV_ENDPOINT = "https://" + WEBDAV_HOST + ":" + WEBDAV_PORT
 
+HTTP_CLIENT =  WebDAVClientFactory.newWebDAVClient(WEBDAV_ENDPOINT, PROXY_FILE)
+
 def status_code(resp):
     return resp.returnStatus.statusCode
 
@@ -81,6 +83,4 @@ class TestRunner:
 
         debug("WEBDAV_ENDPOINT: %s" % WEBDAV_ENDPOINT)
 
-        http_client = WebDAVClientFactory.newWebDAVClient(WEBDAV_ENDPOINT, PROXY_FILE)
-
-        atlas_renaming(http_client)
+        atlas_renaming(HTTP_CLIENT)

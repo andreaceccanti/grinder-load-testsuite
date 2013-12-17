@@ -51,6 +51,10 @@ DO_HANDSHAKE = bool(props['ptg-sync.do_handshake'])
 ## Number of files created in the ptg directory
 NUM_FILES = 50
 
+## The SRM client instance
+SRM_CLIENT = SRMClientFactory.newSRMClient(SRM_ENDPOINT, PROXY_FILE)
+
+
 def status_code(resp):
     return resp.returnStatus.statusCode
 
@@ -136,14 +140,12 @@ class TestRunner:
         try:
             test = Test(TestID.PTG_SYNC, "StoRM Sync PTG test")
             test.record(ptg_sync)
-            client = SRMClientFactory.newSRMClient(SRM_ENDPOINT, PROXY_FILE)
-
             if DO_HANDSHAKE:
-                client.srmPing();
+                SRM_CLIENT.srmPing();
 
-            (base_dir, surls) = setup(client)
-            ptg_sync(client, base_dir)
-            cleanup(client, base_dir)
+            (base_dir, surls) = setup(SRM_CLIENT)
+            ptg_sync(SRM_CLIENT, base_dir)
+            cleanup(SRM_CLIENT, base_dir)
 
         except Exception, e:
             error("Error executing ptg-sync: %s" % traceback.format_exc())

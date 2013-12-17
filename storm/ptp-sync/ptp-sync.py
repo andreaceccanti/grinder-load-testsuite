@@ -47,6 +47,9 @@ SLEEP_TIME = float(props['ptp-sync.sleep_time'])
 ## rule out the handshake time from the stats
 DO_HANDSHAKE = bool(props['ptp-sync.do_handshake'])
 
+## The SRM client instance
+SRM_CLIENT = SRMClientFactory.newSRMClient(SRM_ENDPOINT, PROXY_FILE)
+
 def status_code(resp):
     return resp.returnStatus.statusCode
 
@@ -104,13 +107,12 @@ class TestRunner:
         try:
             test = Test(TestID.PTP_SYNC, "StoRM Sync PTP test")
             test.record(ptp_sync)
-            client = SRMClientFactory.newSRMClient(SRM_ENDPOINT, PROXY_FILE)
 
             if DO_HANDSHAKE:
-                client.srmPing();
+                SRM_CLIENT.srmPing();
 
-            surls = ptp_sync(client)
-            cleanup(client, surls)
+            surls = ptp_sync(SRM_CLIENT)
+            cleanup(SRM_CLIENT, surls)
 
         except Exception, e:
             error("Error executing ptp-sync: %s" % traceback.format_exc())
