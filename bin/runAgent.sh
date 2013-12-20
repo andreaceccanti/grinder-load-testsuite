@@ -2,8 +2,8 @@
 #set -x
 
 LIBS=$(ls -1 lib/*.jar | tr '\n' ':')
-GRINDERHOME="/opt/grinder-3.11"
-CLASSPATH="lib:$LIBS$GRINDERHOME/lib/grinder.jar"
+GRINDER_HOME="${GRINDER_HOME:-/opt/grinder-3.11}"
+CLASSPATH="lib:$LIBS$GRINDER_HOME/lib/grinder.jar"
 THIS_DIR="$( cd $( dirname ${BASH_SOURCE[0]}) && pwd )"
 LOG_DIR="${THIS_DIR}/../log"
 LOG_LEVEL="${GRINDER_LOG_LEVEL:-info}"
