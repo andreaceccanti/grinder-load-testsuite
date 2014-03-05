@@ -17,11 +17,11 @@ debug = grinder.logger.debug
 
 props = grinder.properties
 
-def rmdir(dirname, client):
+def rmdir(dirname, client, recursive):
 
 	debug("Removing directory: %s" % dirname)
 
-	res= client.srmRmdir(dirname, 0)
+	res= client.srmRmdir(dirname, recursive)
 
 	debug("Directory removed")
 	
@@ -30,7 +30,7 @@ def rmdir(dirname, client):
 
 class TestRunner:
 
-	def __call__(self, dirname, client):
+	def __call__(self, dirname, client, recursive=0):
 
 		if client is None:
 			raise Exception("Please set a non-null SRM client!")
@@ -39,7 +39,7 @@ class TestRunner:
 		test.record(rmdir)
 		
 		try:
-			return rmdir(dirname, client)
+			return rmdir(dirname, client, recursive)
 		except Exception:
 			error("Error executing rmdir: %s" % traceback.format_exc())
 			raise

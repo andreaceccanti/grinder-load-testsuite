@@ -40,6 +40,10 @@ WEBDAV_HOST = props['atlas_ren.host']
 WEBDAV_PORT = props['atlas_ren.port']
 WEBDAV_ENDPOINT = "https://" + WEBDAV_HOST + ":" + WEBDAV_PORT + "/webdav"
 
+HTTP_CLIENT =  WebDAVClientFactory.newWebDAVClient(WEBDAV_ENDPOINT, PROXY_FILE)
+SRM_CLIENT = SRMClientFactory.newSRMClient(SRM_ENDPOINT, PROXY_FILE)
+
+
 def randomword(length):
 	return ''.join(random.choice(string.lowercase) for i in range(length))
 
@@ -59,16 +63,21 @@ def compute_filename():
     filename = "f%d" % (random_index)
     return filename
 
+
 def setup(client):
     
 	debug("Setting up atlas renaming test.")
-   
+
+	debug("Creating common base dir: " + SURL_PREFIX)
+
+	mkdir_runner = mkdir.TestRunner()
+	mkdir_runner(SURL_PREFIX, client)
+ 
 	id = str(uuid.uuid4())
 	surl_base_dir = "%s/%s" % (SURL_PREFIX, id)
 	
 	debug("Creating base dir: " + surl_base_dir)
 	
-	mkdir_runner = mkdir.TestRunner()
 	mkdir_runner(surl_base_dir, client)
 	
 	debug("Base directory succesfully created.")
@@ -117,7 +126,7 @@ def cleanup(client, base_dir):
 	debug("Cleaning up for Atlas renaming.")
 
 	rmdir_runner = rmdir.TestRunner()
-	rmdir_runner(base_dir, client)
+	rmdir_runner(base_dir, client, 1)
 
 	debug("Atlas renaming cleanup completed succesfully.")
 
@@ -146,11 +155,8 @@ class TestRunner:
 		test = Test(TestID.ATLAS_RENAMING, "Atlas renaming")
 		test.record(atlas_renaming)
 		
-		srm_client = SRMClientFactory.newSRMClient(SRM_ENDPOINT, PROXY_FILE)
-		http_client = WebDAVClientFactory.newWebDAVClient(WEBDAV_ENDPOINT, PROXY_FILE)
-
-		(base_dir, src_file, dest_file, dir_level1, dir_level2) = setup(srm_client)
-
-		atlas_renaming(src_file, dest_file, dir_level1, dir_level2, http_client)
+		(base_dir, src_file, dest_file, dir_level1, dir_level2) = setup(SRM_CLIENT)
 		
-		cleanup(srm_client, base_dir)
+		atlas_renaming(src_file, dest_file, dir_level1, dir_level2, HTTP_CLIENT)
+		
+		cleanup(SRM_CLIENT, base_dir)
