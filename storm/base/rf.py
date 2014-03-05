@@ -17,23 +17,29 @@ debug = grinder.logger.debug
 
 props = grinder.properties
 
+def rf(surl, token, client):
 
-def http_get(url,http_client):
-                
-        info("HTTP GET %s " % url)
-        resp = http_client.get(url)
-        return resp
+	debug("Releasing file %s with token %s" % (surl,token))
+
+	res= client.srmReleaseFiles(token,[surl])
+
+	debug("File released")
+	
+	return res
+
 
 class TestRunner:
-    def __call__(self,url,http_client):
 
-        if http_client is None:
-            raise Exception("Please set a non-null HTTP client!")
+	def __call__(self, surl, token, client):
 
-        test = Test(TestID.HTTP_GET, "HTTP GET")
-        test.record(http_get)
-        try:
-            return http_get(url,http_client)
-        except Exception:
-            error("Error executing HTTP GET: %s" % traceback.format_exc())
-            raise
+		if client is None:
+			raise Exception("Please set a non-null SRM client!")
+
+		test = Test(TestID.RF, "StoRM RF")
+		test.record(rf)
+		
+		try:
+			return rf(surl, token, client)
+		except Exception:
+			error("Error executing srmRf: %s" % traceback.format_exc())
+			raise

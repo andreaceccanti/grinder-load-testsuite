@@ -59,6 +59,7 @@ class TestID():
     HEAD      = 14
     MKCOL     = 15
     MOVE      = 16
+    RF        = 17
 
     PTG_SYNC  = 100
     PTP_SYNC  = 101

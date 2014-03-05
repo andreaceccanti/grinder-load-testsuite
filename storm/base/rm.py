@@ -17,23 +17,29 @@ debug = grinder.logger.debug
 
 props = grinder.properties
 
+def rm(surl, client):
 
-def http_get(url,http_client):
-                
-        info("HTTP GET %s " % url)
-        resp = http_client.get(url)
-        return resp
+	debug("Removing file: %s" % surl)
+
+	res= client.srmRm([surl])
+
+	debug("File removed")
+	
+	return res
+
 
 class TestRunner:
-    def __call__(self,url,http_client):
 
-        if http_client is None:
-            raise Exception("Please set a non-null HTTP client!")
+	def __call__(self, surl, client):
 
-        test = Test(TestID.HTTP_GET, "HTTP GET")
-        test.record(http_get)
-        try:
-            return http_get(url,http_client)
-        except Exception:
-            error("Error executing HTTP GET: %s" % traceback.format_exc())
-            raise
+		if client is None:
+			raise Exception("Please set a non-null SRM client!")
+
+		test = Test(TestID.RM, "StoRM RM")
+		test.record(rm)
+		
+		try:
+			return rm(surl, client)
+		except Exception:
+			error("Error executing rmdir: %s" % traceback.format_exc())
+			raise
