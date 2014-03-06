@@ -18,27 +18,22 @@ debug = grinder.logger.debug
 
 props = grinder.properties
 
-
-def randomword(length):
-    return ''.join(random.choice(string.lowercase) for i in range(length))
-
-def http_put(turls,num_bytes):
+def http_put(url,local_file_path,http_client):
                 
-        info("HTTP PUT %s " % turls)
-        
-        req = HTTPRequest()
-        req.setData(randomword(num_bytes)) 
-        resp = req.PUT(turls.toString())               
-        
+        info("HTTP PUT %s " % url)
+        resp = http_client.put(url,local_file_path)
         return resp
 
 class TestRunner:
-    def __call__(self,turls,num_bytes):
+    def __call__(self,url,local_file_path,http_client):
+
+        if http_client is None:
+            raise Exception("Please set a non-null HTTP client!")
 
         test = Test(TestID.HTTP_PUT, "HTTP PUT")
         test.record(http_put)
         try:
-            return http_put(turls,num_bytes)
+            return http_put(url,local_file_path,http_client)
         except Exception:
             error("Error executing HTTP PUT: %s" % traceback.format_exc())
             raise
