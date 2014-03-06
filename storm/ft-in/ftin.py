@@ -38,7 +38,7 @@ TRANSFER_PROTOCOL = props['ftin.transfer_protocol']
 
 # Endpoints
 FILETRANSFER_ENDPOINT = "https://%s:%s" % (props['ftin.gridhttps_host'],props['ftin.gridhttps_ssl_port'])
-TESTCLIENT_ENDPOINT = "https://%s:%s" % (props['ftin.frontend_host'],props['ftin.frontend_port'])
+FRONTEND_ENDPOINT = "https://%s:%s" % (props['ftin.frontend_host'],props['ftin.frontend_port'])
 SRM_ENDPOINT    = "srm://%s:%s" % (props['ftin.frontend_host'],props['ftin.frontend_port'])
 
 # Start sleeping between sptg requests after this number
@@ -52,7 +52,7 @@ SRM_SUCCESS     = TStatusCode.SRM_SUCCESS
 
 HTTP_CLIENT     = WebDAVClientFactory.newWebDAVClient(FILETRANSFER_ENDPOINT,PROXY_FILE)
 
-SRM_CLIENT      = SRMClientFactory.newSRMClient(TESTCLIENT_ENDPOINT,PROXY_FILE)
+SRM_CLIENT      = SRMClientFactory.newSRMClient(FRONTEND_ENDPOINT,PROXY_FILE)
 
 
 def status_code(resp):
@@ -66,7 +66,7 @@ def check_success(res, msg):
         error_msg = "%s. %s (expl: %s)" % (msg, status_code(res), explanation(res))
         raise Exception(error_msg)
 
-def check_httpget_success(statusCode, expected_code, error_msg):
+def check_http_success(statusCode, expected_code, error_msg):
     if (statusCode != expected_code):
         msg = "%s. Status code is %s instead of %s" % (error_msg, statusCode, expected_code)
         raise Exception(msg)
@@ -155,7 +155,7 @@ def file_transfer_in(SRM_client, HTTP_client, target_file_name, transfer_protoco
 
     http_get_runner=http_get.TestRunner()
     statusCode = http_get_runner(turl,HTTP_client)
-    check_httpget_success(statusCode, 200, "Error in HTTP GET")
+    check_http_success(statusCode, 200, "Error in HTTP GET")
 
     do_release_file(SRM_client,target_file_surl,token)
 
