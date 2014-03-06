@@ -34,12 +34,12 @@ PROXY_FILE      = props['client.proxy']
 # Test specific variables
 TEST_DIRECTORY  = props['ftin.test_directory']
 TEST_STORAGEAREA = props['ftin.test_storagearea']
-TRANSFER_PROTOCOL = props['ftin.transferProtocol']
+TRANSFER_PROTOCOL = props['ftin.transfer_protocol']
 
 # Endpoints
-WEBDAV_ENDPOINT = props['ftin.webdav_endpoint']
-TESTCLIENT_ENDPOINT = "https://%s" % props['storm.host']
-SRM_ENDPOINT    = props['ftin.srm_endpoint']
+FILETRANSFER_ENDPOINT = "https://%s:%s" % (props['ftin.gridhttps_host'],props['ftin.gridhttps_ssl_port'])
+TESTCLIENT_ENDPOINT = "https://%s:%s" % (props['ftin.frontend_host'],props['ftin.frontend_port'])
+SRM_ENDPOINT    = "srm://%s:%s" % (props['ftin.frontend_host'],props['ftin.frontend_port'])
 
 # Start sleeping between sptg requests after this number
 SLEEP_THRESHOLD = int(props['ftin.sleep_threshold'])
@@ -50,7 +50,7 @@ SLEEP_TIME      = float(props['ftin.sleep_time'])
 WAITING_STATES  = [TStatusCode.SRM_REQUEST_QUEUED, TStatusCode.SRM_REQUEST_INPROGRESS]
 SRM_SUCCESS     = TStatusCode.SRM_SUCCESS
 
-HTTP_CLIENT     = WebDAVClientFactory.newWebDAVClient(WEBDAV_ENDPOINT, PROXY_FILE)
+HTTP_CLIENT     = WebDAVClientFactory.newWebDAVClient(FILETRANSFER_ENDPOINT,PROXY_FILE)
 
 SRM_CLIENT      = SRMClientFactory.newSRMClient(TESTCLIENT_ENDPOINT,PROXY_FILE)
 
