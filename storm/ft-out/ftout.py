@@ -15,6 +15,7 @@ import string
 import time
 import traceback
 import uuid
+import os
 
 
 ## This loads the base properties inside grinder properties
@@ -28,7 +29,7 @@ debug          = grinder.logger.debug
 props          = grinder.properties
 
 # Proxy authorized to write on SRM/WEBDAV endpoints
-PROXY_FILE      = props['client.proxy']
+PROXY_FILE      = os.environ['X509_USER_PROXY']
 
 # Test specific variables
 TEST_DIRECTORY  = props['ftout.test_directory']
