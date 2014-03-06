@@ -1,10 +1,10 @@
-# The File-Transfer-In test
+# The File-Transfer-Out test
 
 ## Create a valid voms proxy 
 
 This test requires that you have a valid voms proxy
 that will be authorized to write on the storage area
-specified by the `ftin.test_storagearea` property. 
+specified by the `ftout.test_storagearea` property. 
 Check if the environment variable X509\_USER\_PROXY exists
 and contains the correct path of your VOMS proxy. 
 
