@@ -33,13 +33,7 @@ PROXY_FILE      = get_proxy_file_path()
 
 # Test specific variables
 TEST_DIRECTORY  = props['ftout.test_directory']
-TEST_STORAGEAREA = props['ftout.test_storagearea']
 TRANSFER_PROTOCOL = props['ftout.transfer_protocol']
-
-# Endpoints
-FILETRANSFER_ENDPOINT = "https://%s:%s" % (props['ftout.gridhttps_host'],props['ftout.gridhttps_ssl_port'])
-TESTCLIENT_ENDPOINT = "https://%s:%s" % (props['ftout.frontend_host'],props['ftout.frontend_port'])
-SRM_ENDPOINT    = "srm://%s:%s" % (props['ftout.frontend_host'],props['ftout.frontend_port'])
 
 # Start sleeping between sptg requests after this number
 SLEEP_THRESHOLD = int(props['ftout.sleep_threshold'])
@@ -47,14 +41,20 @@ SLEEP_THRESHOLD = int(props['ftout.sleep_threshold'])
 ## Sleep time (seconds)
 SLEEP_TIME      = float(props['ftout.sleep_time'])
 
+# Get common variables:
+TEST_STORAGEAREA = props['common.test_storagearea']
+
+## Endpoints
+FILETRANSFER_ENDPOINT = "https://%s:%s" % (props['common.gridhttps_host'],props['common.gridhttps_ssl_port'])
+TESTCLIENT_ENDPOINT = "https://%s:%s" % (props['common.frontend_host'],props['common.frontend_port'])
+SRM_ENDPOINT    = "srm://%s:%s" % (props['common.frontend_host'],props['common.frontend_port'])
+
 WAITING_STATES  = [TStatusCode.SRM_REQUEST_QUEUED, TStatusCode.SRM_REQUEST_INPROGRESS]
 SRM_SUCCESS     = TStatusCode.SRM_SUCCESS
 
 HTTP_CLIENT     = WebDAVClientFactory.newWebDAVClient(FILETRANSFER_ENDPOINT,PROXY_FILE)
 
 SRM_CLIENT      = SRMClientFactory.newSRMClient(TESTCLIENT_ENDPOINT,PROXY_FILE)
-
-NUM_BYTES = int(props['ftout.num_bytes_transferred'])
 
 def status_code(resp):
     return resp.returnStatus.statusCode

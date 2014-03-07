@@ -32,17 +32,19 @@ props           = grinder.properties
 # Proxy authorized to write on SRM/WEBDAV endpoints
 PROXY_FILE      = get_proxy_file_path()
 
+# Common variables:
+TEST_STORAGEAREA = props['common.test_storagearea']
+
+## Endpoints
+FILETRANSFER_ENDPOINT = "https://%s:%s" % (props['common.gridhttps_host'],props['common.gridhttps_ssl_port'])
+FRONTEND_ENDPOINT = "https://%s:%s" % (props['common.frontend_host'],props['common.frontend_port'])
+SRM_ENDPOINT    = "srm://%s:%s" % (props['common.frontend_host'],props['common.frontend_port'])
+
 # Test specific variables
 TEST_DIRECTORY  = props['ftin.test_directory']
-TEST_STORAGEAREA = props['ftin.test_storagearea']
 TRANSFER_PROTOCOL = props['ftin.transfer_protocol']
 
-# Endpoints
-FILETRANSFER_ENDPOINT = "https://%s:%s" % (props['ftin.gridhttps_host'],props['ftin.gridhttps_ssl_port'])
-FRONTEND_ENDPOINT = "https://%s:%s" % (props['ftin.frontend_host'],props['ftin.frontend_port'])
-SRM_ENDPOINT    = "srm://%s:%s" % (props['ftin.frontend_host'],props['ftin.frontend_port'])
-
-# Start sleeping between sptg requests after this number
+## Start sleeping between sptg requests after this number
 SLEEP_THRESHOLD = int(props['ftin.sleep_threshold'])
 
 ## Sleep time (seconds)

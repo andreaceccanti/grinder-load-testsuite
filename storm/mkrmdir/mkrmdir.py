@@ -30,13 +30,15 @@ props          = grinder.properties
 # Proxy authorized to write on SRM/WEBDAV endpoints
 PROXY_FILE      = get_proxy_file_path()
 
+# Get common variables:
+TEST_STORAGEAREA = props['common.test_storagearea']
+
+## Endpoints
+FRONTEND_ENDPOINT = "https://%s:%s" % (props['common.frontend_host'],props['common.frontend_port'])
+SRM_ENDPOINT    = "srm://%s:%s" % (props['common.frontend_host'],props['common.frontend_port'])
+
 # Test specific variables
 TEST_DIRECTORY  = props['mkrmdir.test_directory']
-TEST_STORAGEAREA = props['mkrmdir.test_storagearea']
-
-# Endpoints
-FRONTEND_ENDPOINT = "https://%s:%s" % (props['mkrmdir.frontend_host'],props['mkrmdir.frontend_port'])
-SRM_ENDPOINT    = "srm://%s:%s" % (props['mkrmdir.frontend_host'],props['mkrmdir.frontend_port'])
 
 SRM_SUCCESS     = TStatusCode.SRM_SUCCESS
 

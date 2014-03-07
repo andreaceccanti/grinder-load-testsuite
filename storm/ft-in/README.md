@@ -4,9 +4,9 @@
 
 This test requires that you have a valid voms proxy
 that will be authorized to write on the storage area
-specified by the `ftin.test_storagearea` property. 
+specified by the `common.test_storagearea` property. 
 
-```properties
+```
 voms-proxy-init --voms <vo-name>
 ```
 
@@ -14,7 +14,7 @@ Check if the environment variable X509\_USER\_PROXY exists
 and contains the correct path of your VOMS proxy. 
 If X509\_USER\_PROXY doesn't exist check the success of:
 
-```properties
+```
 ls /tmp/x509up_u$(id -u)
 ```
 
@@ -23,18 +23,18 @@ ls /tmp/x509up_u$(id -u)
 This test needs to know the srm endpoint:
 
 ```properties
-ftin.frontend_host = 
-ftin.frontend_port = 8444
+common.frontend_host = 
+common.frontend_port = 8444
 ```
 
 and the file-transfer service endpoint:
 
 ```properties
-ftin.gridhttps_host = 
-ftin.gridhttps_ssl_port = 8443
+common.gridhttps_host = 
+common.gridhttps_ssl_port = 8443
 ```
 
-Edit the `storm/ft-in/test.properties` file and set 
+Edit the `storm/base/common.properties` file and set 
 these properties as you need.
 
 ## Run the grinder console
