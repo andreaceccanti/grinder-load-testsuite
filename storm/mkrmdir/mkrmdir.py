@@ -5,7 +5,6 @@ from gov.lbl.srm.StorageResourceManager import TStatusCode
 from jarray import array
 from java.io import FileInputStream
 from javax.net.ssl import X509ExtendedKeyManager
-from net.grinder.plugin.http import HTTPRequest
 from net.grinder.script import Test
 from net.grinder.script.Grinder import grinder
 from org.italiangrid.srm.client import SRMClient, SRMClientFactory
@@ -15,6 +14,7 @@ import string
 import time
 import traceback
 import uuid
+import os
 
 
 ## This loads the base properties inside grinder properties
@@ -27,78 +27,76 @@ debug          = grinder.logger.debug
 
 props          = grinder.properties
 
-PROXY_FILE     = props['client.proxy']
-FE_HOST        = props['storm.host']
-BASE_FILE_PATH = props['mkrmdir.base_file_path']
+# Proxy authorized to write on SRM/WEBDAV endpoints
+PROXY_FILE      = os.environ['X509_USER_PROXY']
 
-SRM_ENDPOINT   = "https://%s" % FE_HOST
-SURL_PREFIX    = "srm://%s/%s" % (FE_HOST, BASE_FILE_PATH)
+# Test specific variables
+TEST_DIRECTORY  = props['mkrmdir.test_directory']
+TEST_STORAGEAREA = props['mkrmdir.test_storagearea']
 
-## Perform an srmPing before running the test to
-## rule out the handshake time from the stats
-DO_HANDSHAKE = bool(props['mkrmdir.do_handshake'])
+# Endpoints
+FRONTEND_ENDPOINT = "https://%s:%s" % (props['mkrmdir.frontend_host'],props['mkrmdir.frontend_port'])
+SRM_ENDPOINT    = "srm://%s:%s" % (props['mkrmdir.frontend_host'],props['mkrmdir.frontend_port'])
+
+SRM_SUCCESS     = TStatusCode.SRM_SUCCESS
+
+SRM_CLIENT      = SRMClientFactory.newSRMClient(FRONTEND_ENDPOINT,PROXY_FILE)
+
 
 def status_code(resp):
+
     return resp.returnStatus.statusCode
 
-def compute_surl():
-	rand_uuid = uuid.uuid4()
-	surl = "%s/%s" % (SURL_PREFIX, str(rand_uuid))
-	return surl
+def explanation(resp):
+
+    return resp.returnStatus.explanation
+
+def check_success(res, msg):
+
+    if status_code(res) != SRM_SUCCESS:
+        error_msg = "%s. %s (expl: %s)" % (msg, status_code(res), explanation(res))
+        raise Exception(error_msg)
+
+def create_test_directory_if_needed(SRM_client):
+
+    test_dir_surl = "%s/%s/%s" % (SRM_ENDPOINT, TEST_STORAGEAREA, TEST_DIRECTORY)
+    SRM_client.srmMkdir(test_dir_surl)
+
+def setup(SRM_client):
+
+    info("Setting up mkrmdir test.")
+    create_test_directory_if_needed(SRM_client)
+    info("mkrmdir setup completed successfully.")
 
 def mkrmdir(client):
 
-	surl = compute_surl()
+    dir_name = str(uuid.uuid4());
+    surl = "%s/%s/%s/%s" % (SRM_ENDPOINT, TEST_STORAGEAREA, TEST_DIRECTORY, dir_name)
 
-	mkdir_runner = mkdir.TestRunner()
-	mkdir_res = mkdir_runner(surl, client)
+    mkdir_runner = mkdir.TestRunner()
+    mkdir_res = mkdir_runner(surl, client)
+    check_success(mkdir_res, "MkDir failure on surl: %s" % surl)
 
-	if status_code(mkdir_res) != TStatusCode.SRM_SUCCESS:
-		msg = "MkDir failure on surl: %s" % surl
-		error(msg)
-		raise Exception(msg)
+    ls_runner = ls.TestRunner()
+    ls_res = ls_runner(surl, client)
+    check_success(ls_res, "Ls failure on surl: %s" % surl)
 
-	ls_runner = ls.TestRunner()
-	ls_res = ls_runner(surl, client)
-
-	if status_code(ls_res) != TStatusCode.SRM_SUCCESS:
-		msg = "MkDir failure on surl: %s" % surl
-		error(msg)
-		raise Exception(msg)
-
-	return surl
-
-
-def cleanup(client, surl):
-
-	rmdir_runner = rmdir.TestRunner()
-	res = rmdir_runner(surl, client)
-
-	if status_code(res) != TStatusCode.SRM_SUCCESS:
-		msg = "rmdir failure on surl: %s" % surl
-		error(msg)
-		raise Exception(msg)
-
-		debug("Cleaned up %s" % surl)
+    rmdir_runner = rmdir.TestRunner()
+    rmdir_res = rmdir_runner(surl, client)
+    check_success(rmdir_res, "RmDir failure on surl: %s" % surl)
 
 
 class TestRunner:
 
-	def __call__(self):
-		
-		try:
-			
-			test = Test(TestID.MKRMDIR, "Create and then remove a directory")
-			test.record(mkrmdir)
-			
-			client = SRMClientFactory.newSRMClient(SRM_ENDPOINT, PROXY_FILE)
+    def __call__(self):
 
-			if DO_HANDSHAKE:
-				client.srmPing();
+        try:
+            test = Test(TestID.MKRMDIR, "StoRM MkDir+RmDir")
+            test.record(mkrmdir)
 
-			surl = mkrmdir(client)
-			cleanup(client, surl)
+            setup(SRM_CLIENT)
+            mkrmdir(SRM_CLIENT)
 
-		except Exception, e:
-			error("Error executing ptp-sync: %s" % traceback.format_exc())
-			raise
+        except Exception, e:
+            error("Error executing mkdir-rmdir: %s" % traceback.format_exc())
+            raise
