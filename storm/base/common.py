@@ -9,6 +9,12 @@ PROPERTIES = "common.properties"
 def get_logger(name):
     return LoggerFactory.getLogger(name)
 
+def get_proxy_file_path():
+    user_proxy = os.getenv('X509_USER_PROXY')
+    if user_proxy is None:
+        user_proxy = "/tmp/x509up_u%s" % os.geteuid()
+    return user_proxy
+
 def log_surl_call_result(op_name, res, logger=None):
 
     if logger is None:

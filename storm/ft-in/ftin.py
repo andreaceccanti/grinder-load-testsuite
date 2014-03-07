@@ -1,4 +1,4 @@
-from common import TestID, load_common_properties
+from common import TestID, load_common_properties, get_proxy_file_path
 from eu.emi.security.authn.x509.impl import PEMCredential
 from exceptions import Exception
 from gov.lbl.srm.StorageResourceManager import TStatusCode
@@ -30,7 +30,7 @@ debug           = grinder.logger.debug
 props           = grinder.properties
 
 # Proxy authorized to write on SRM/WEBDAV endpoints
-PROXY_FILE      = os.environ['X509_USER_PROXY']
+PROXY_FILE      = get_proxy_file_path()
 
 # Test specific variables
 TEST_DIRECTORY  = props['ftin.test_directory']
