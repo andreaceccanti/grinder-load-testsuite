@@ -1,4 +1,4 @@
-from common import TestID, load_common_properties
+from common import TestID, load_common_properties, get_proxy_file_path
 from eu.emi.security.authn.x509.impl import PEMCredential
 from exceptions import Exception
 from gov.lbl.srm.StorageResourceManager import TStatusCode
@@ -29,7 +29,7 @@ debug          = grinder.logger.debug
 props          = grinder.properties
 
 # Proxy authorized to write on SRM/WEBDAV endpoints
-PROXY_FILE      = os.environ['X509_USER_PROXY']
+PROXY_FILE      = get_proxy_file_path()
 
 # Test specific variables
 TEST_DIRECTORY  = props['ftout.test_directory']
@@ -93,7 +93,7 @@ def setup(client):
 
 def cleanup(client, target_file_name):
 
-    info("Cleaning up for file-transfer-in test.")
+    info("Cleaning up for file-transfer-out test.")
 
     target_file_surl = "%s/%s/%s/%s" % (SRM_ENDPOINT, TEST_STORAGEAREA, TEST_DIRECTORY, target_file_name)
     rm_runner = rm.TestRunner()
@@ -101,7 +101,7 @@ def cleanup(client, target_file_name):
     if status_code(res) != SRM_SUCCESS:
         raise Exception("srmRm failed for %s. %s %s" % (target_file_surl, status_code(res), explanation(res)))
 
-    info("file-transfer-in cleanup completed successfully.")
+    info("file-transfer-out cleanup completed successfully.")
 
 def do_prepare_to_put(SRM_client,surl,transfer_protocol):
 
