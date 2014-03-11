@@ -17,20 +17,20 @@ debug = grinder.logger.debug
 
 props = grinder.properties
 
-def rm(surl, client):
+def rm(surls, client):
 
-	debug("Removing file: %s" % surl)
+	debug("Removing file(s): %s" % surls)
 
-	res= client.srmRm([surl])
+	res= client.srmRm(surls)
 
-	debug("File removed")
+	debug("File(s) removed")
 	
 	return res
 
 
 class TestRunner:
 
-	def __call__(self, surl, client):
+	def __call__(self, surls, client):
 
 		if client is None:
 			raise Exception("Please set a non-null SRM client!")
@@ -39,7 +39,7 @@ class TestRunner:
 		test.record(rm)
 		
 		try:
-			return rm(surl, client)
+			return rm(surls, client)
 		except Exception:
 			error("Error executing rmdir: %s" % traceback.format_exc())
 			raise

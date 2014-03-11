@@ -105,7 +105,7 @@ def cleanup(client, target_file_name):
     info("Cleaning up for ptp-async test.")
     target_file_surl = "%s/%s/%s/%s" % (SRM_ENDPOINT, TEST_STORAGEAREA, TEST_DIRECTORY, target_file_name)
     rm_runner = rm.TestRunner()
-    res = rm_runner(target_file_surl, client)
+    res = rm_runner([target_file_surl], client)
     if status_code(res) != SRM_SUCCESS:
         raise Exception("RM failed for %s. %s %s" % (target_file_surl, status_code(res), explanation(res)))
     debug("Cleaned up %s" % target_file_surl)

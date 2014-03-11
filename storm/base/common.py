@@ -75,3 +75,4 @@ class TestID():
     ATLAS_RENAMING = 105
     MULTI_HEAD = 106
     PTP_ASYNC_PD = 107
+    RM_FILES  = 108

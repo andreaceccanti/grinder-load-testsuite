@@ -1,11 +1,60 @@
-# Load test for SRM rm
+# The Rm-files test
 
-*Only works for one agent, one process so far.*
+## Create a valid voms proxy 
 
-This test suppose the service under stand test contains directories _d1_, _d2_, .., _dn_, with _n_ less or equal to the the number of threads (which is controlled by the _grinder.threads_ property in the _test.properties_ file). Each directory is supposed to contain files _f1_, _f2_, .., _fm_ where _m_ is the value of the _storm.rm.num\_files_ property in _test.properties_). For creating this files you can use the _fixture.sh_ script in the _bin_ directory, editing the script to change the _num\_dir_ and _num\_files_ variable according to the how the test will be executed.
+This test requires that you have a valid voms proxy
+that will be authorized to write on the storage area
+specified by the `common.test_storagearea` property. 
 
-Edit the properties file under _storm/ls_ providing the endpoint of the service to test and other information, and run either using the runAgent script in the bin directory or directly using
+```
+voms-proxy-init --voms <vo-name>
+```
 
-	java -cp /opt/grinder-3.11/lib/*:lib/* net.grinder.Grinder storm/ls/test.properties
+Check if the environment variable X509\_USER\_PROXY exists
+and contains the correct path of your VOMS proxy. 
+If X509\_USER\_PROXY doesn't exist check the success of:
 
-(this suppose grinder is installed in /opt/grinder-3.11, change according to your installation).
+```
+ls /tmp/x509up_u$(id -u)
+```
+
+## Set the correct endpoints
+
+This test needs to know the srm endpoint:
+
+```properties
+common.frontend_host = 
+common.frontend_port = 8444
+```
+
+Edit the `storm/base/common.properties` file and set 
+these properties as you need.
+
+## Run the grinder console
+
+This test requires the Grinder console to run, so start
+the console using the following command:
+
+    ./bin/runConsole.sh
+
+## Run the agents
+
+Once you have the console running, the proxy created and 
+the test variables configured, run the agents and point
+them to the host where the console is running, using the
+following command:
+
+```bash
+GRINDER_USE_CONSOLE=true GRINDER_CONSOLE_HOST=host.cnaf.infn.it \
+GRINDER_PROCESSES=5 GRINDER_THREADS=10 GRINDER_RUNS=50 \
+./bin/runAgent.sh storm/rm/test.properties
+```
+
+The command above starts a local agent which connects to a 
+console running on `host.cnaf.infn.it` and, when started from
+the console, will run 5 processes each executing 10 threads 
+of the rm-files test for 50 runs.
+
+You can run the above command on several machines in order
+to have several load injectors which will be controlled 
+by the console.

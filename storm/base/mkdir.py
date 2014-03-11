@@ -35,7 +35,7 @@ class TestRunner:
 		if client is None:
 			raise Exception("Please set a non-null SRM client!")
 
-		test = Test(TestID.MKDIR, "mkdir")
+		test = Test(TestID.MKDIR, "StoRM MKDIR")
 		test.record(mkdir)
 		
 		try:

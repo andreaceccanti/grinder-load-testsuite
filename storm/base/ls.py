@@ -33,7 +33,7 @@ class TestRunner:
 		if client is None:
 			raise Exception("Please set a non-null SRM client!")
 
-		test = Test(TestID.LS, "ls")
+		test = Test(TestID.LS, "StoRM LS")
 		test.record(ls)
 
 		try:
