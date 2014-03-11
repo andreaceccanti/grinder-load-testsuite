@@ -58,19 +58,20 @@ class TestID():
     MKDIR     = 7
     RMDIR     = 8
     MV        = 9
-    REL_FILES = 10
+    RF        = 10
     HTTP_GET  = 11
     HTTP_PUT  = 12
     PD        = 13
     HEAD      = 14
     MKCOL     = 15
     MOVE      = 16
-    RF        = 17
+    PTP_SYNC  = 17
 
     PTG_SYNC  = 100
-    PTP_SYNC  = 101
+    PTP_SYNC_PD = 101
     TXFER_IN  = 102
     TXFER_OUT = 103
     MKRMDIR   = 104
     ATLAS_RENAMING = 105
     MULTI_HEAD = 106
+    PTP_ASYNC_PD = 107
