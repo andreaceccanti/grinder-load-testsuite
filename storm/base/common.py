@@ -76,3 +76,4 @@ class TestID():
     MULTI_HEAD = 106
     PTP_ASYNC_PD = 107
     RM_FILES  = 108
+    LS_TEST   = 109
