@@ -1,4 +1,4 @@
-from common import TestID, load_common_properties
+from common import TestID, load_common_properties, get_proxy_file_path
 from eu.emi.security.authn.x509.impl import PEMCredential
 from exceptions import Exception
 from gov.lbl.srm.StorageResourceManager import TStatusCode
@@ -9,9 +9,8 @@ from net.grinder.plugin.http import HTTPRequest
 from net.grinder.script import Test
 from net.grinder.script.Grinder import grinder
 from org.italiangrid.srm.client import SRMClient, SRMClientFactory
-import ptg
+import ptg,rmdir,sptg,sptp,mkdir,ptp,pd
 import random
-import sptg
 import string
 import time
 import traceback
@@ -27,12 +26,20 @@ debug          = grinder.logger.debug
 
 props          = grinder.properties
 
-PROXY_FILE     = props['client.proxy']
-FE_HOST        = props['storm.host']
-BASE_FILE_PATH = props['ptg-sync.base_file_path']
+# Proxy authorized to write on SRM/WEBDAV endpoints
+PROXY_FILE      = get_proxy_file_path()
 
-SRM_ENDPOINT   = "https://%s" % FE_HOST
-SURL_PREFIX    = "srm://%s/%s" % (FE_HOST, BASE_FILE_PATH)
+# Common variables:
+TEST_STORAGEAREA = props['common.test_storagearea']
+
+## Endpoints
+FILETRANSFER_ENDPOINT = "https://%s:%s" % (props['common.gridhttps_host'],props['common.gridhttps_ssl_port'])
+FRONTEND_ENDPOINT = "https://%s:%s" % (props['common.frontend_host'],props['common.frontend_port'])
+SRM_ENDPOINT    = "srm://%s:%s" % (props['common.frontend_host'],props['common.frontend_port'])
+
+
+# Test specific variables
+TEST_DIRECTORY  = props['ptg-sync.test_directory']
 
 WAITING_STATES = [TStatusCode.SRM_REQUEST_QUEUED, TStatusCode.SRM_REQUEST_INPROGRESS]
 
@@ -52,8 +59,7 @@ DO_HANDSHAKE = bool(props['ptg-sync.do_handshake'])
 NUM_FILES = 50
 
 ## The SRM client instance
-SRM_CLIENT = SRMClientFactory.newSRMClient(SRM_ENDPOINT, PROXY_FILE)
-
+SRM_CLIENT = SRMClientFactory.newSRMClient(FRONTEND_ENDPOINT,PROXY_FILE)
 
 def status_code(resp):
     return resp.returnStatus.statusCode
@@ -72,11 +78,17 @@ def check_success(res, msg):
         raise Exception(error_msg)
 
 def setup(client):
-    info("Setting up ptg-sync test.")
-    base_dir = "%s/%s" % (SURL_PREFIX, str(uuid.uuid4()))
-    info("Creating base dir: " + base_dir)
 
-    res = client.srmMkdir(base_dir)
+    info("Setting up ptg-sync test.")
+
+    test_dir = "%s/%s/%s" % (SRM_ENDPOINT, TEST_STORAGEAREA, TEST_DIRECTORY)
+    mkdir_runner = mkdir.TestRunner()
+    res = mkdir_runner(test_dir,client)
+
+    base_dir = "%s/%s" % (test_dir, str(uuid.uuid4()))
+    info("Creating thread specific dir: " + base_dir)
+
+    res = mkdir_runner(base_dir,client)
     check_success(res, "Error creating %s" % base_dir)
     info("Base directory succesfully created.")
 
@@ -88,16 +100,21 @@ def setup(client):
             info("Creating surls like this: "+ f_surl)
         surls.append(f_surl)
 
-    res = client.srmPtP(surls,[])
+    ptp_runner = ptp.TestRunner()
+    res = ptp_runner(surls,[],client)
+
+    sptp_runner = sptp.TestRunner()
     while True:
-        sres = client.srmSPtP(res)
+	sres = sptp_runner(res,client)
         if status_code(sres) in WAITING_STATES:
             time.sleep(1)
         else:
             break
 
     check_success(sres, "Error in PtP for surls (only 5 shown out of %d): %s." % (len(surls),surls[0:5]))
-    res = client.srmPd(surls, res.requestToken)
+    pd_runner = pd.TestRunner()
+    res = pd_runner(surls,res.requestToken,client)
+
     check_success(res, "Error in PD for surls: %s" % surls)
     info("ptg-sync setup completed succesfully.")
 
@@ -106,7 +123,9 @@ def setup(client):
 def cleanup(client, base_dir):
     info("Cleaning up for ptg-sync test.")
 
-    res = client.srmRmdir(base_dir, True)
+    rmdir_runner = rmdir.TestRunner()
+    res = rmdir_runner(base_dir, client, True)
+
     if status_code(res) != SRM_SUCCESS:
         raise Exception("srmRmdir failed for %s. %s %s" %(base_dir, status_code(res), explanation(res)))
     info("ptg-sync cleanup completed succesfully.")
