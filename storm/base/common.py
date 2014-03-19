@@ -66,6 +66,7 @@ class TestID():
     MKCOL     = 15
     MOVE      = 16
     PTP_SYNC  = 17
+    DELETE    = 18
 
     PTG_SYNC  = 100
     PTP_SYNC_PD = 101
@@ -77,3 +78,4 @@ class TestID():
     PTP_ASYNC_PD = 107
     RM_FILES  = 108
     LS_TEST   = 109
+    MIX_DAV   = 110
