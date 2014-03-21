@@ -53,10 +53,6 @@ SLEEP_TIME      = float(props['ftin.sleep_time'])
 WAITING_STATES  = [TStatusCode.SRM_REQUEST_QUEUED, TStatusCode.SRM_REQUEST_INPROGRESS]
 SRM_SUCCESS     = TStatusCode.SRM_SUCCESS
 
-HTTP_CLIENT     = WebDAVClientFactory.newWebDAVClient(FILETRANSFER_ENDPOINT,PROXY_FILE)
-
-SRM_CLIENT      = SRMClientFactory.newSRMClient(FRONTEND_ENDPOINT,PROXY_FILE)
-
 
 def status_code(resp):
     return resp.returnStatus.statusCode
@@ -107,17 +103,13 @@ def setup(client):
     info("Target file successfully created.")
 
     info("file-transfer-in setup completed successfully.")
-    return target_file_name
+    return target_file_surl
 
-def cleanup(client, target_file_name):
+def cleanup(client, target_file_surl):
     info("Cleaning up for file-transfer-in test.")
-
-    target_file_surl = "%s/%s/%s/%s" % (SRM_ENDPOINT, TEST_STORAGEAREA, TEST_DIRECTORY, target_file_name)
-    rm_runner = rm.TestRunner()
-    res = rm_runner([target_file_surl], client)
+    res = client.srmRm([target_file_surl])
     if status_code(res) != SRM_SUCCESS:
         raise Exception("srmRm failed for %s. %s %s" % (target_file_surl, status_code(res), explanation(res)))
-
     info("file-transfer-in cleanup completed successfully.")
 
 def do_prepare_to_get(SRM_client,surl,transfer_protocol):
@@ -145,18 +137,16 @@ def do_prepare_to_get(SRM_client,surl,transfer_protocol):
 
 def do_release_file(SRM_client,surl,token):
 
-    rf_runner=rf.TestRunner()
+    rf_runner = rf.TestRunner()
     rf_res = rf_runner(surl,token,SRM_client)
     check_success(rf_res, "Error in RF for surl %s and token %s" % (surl, token))
 
 
-def file_transfer_in(SRM_client, HTTP_client, target_file_name, transfer_protocol):
+def file_transfer_in(SRM_client, HTTP_client, target_file_surl, transfer_protocol):
 
-    target_file_surl = "%s/%s/%s/%s" % (SRM_ENDPOINT, TEST_STORAGEAREA, TEST_DIRECTORY, target_file_name)
-    
     (token,turl) = do_prepare_to_get(SRM_client,target_file_surl,transfer_protocol)
 
-    http_get_runner=http_get.TestRunner()
+    http_get_runner = http_get.TestRunner()
     statusCode = http_get_runner(turl,HTTP_client)
     check_http_success(statusCode, 200, "Error in HTTP GET")
 
@@ -165,14 +155,18 @@ def file_transfer_in(SRM_client, HTTP_client, target_file_name, transfer_protoco
 
 class TestRunner:
 
-	def __call__(self):		
+	def __init__(self):
+		self.SRMclient = SRMClientFactory.newSRMClient(FRONTEND_ENDPOINT,PROXY_FILE)
+		self.HTTPclient = WebDAVClientFactory.newWebDAVClient(FILETRANSFER_ENDPOINT,PROXY_FILE)
+		self.target_file_surl = setup(self.SRMclient)
+
+	def __call__(self):
 		try:
 			test = Test(TestID.TXFER_IN, "StoRM file-transfer IN")
 			test.record(file_transfer_in)
-
-			(target_file_name) = setup(SRM_CLIENT)
-			file_transfer_in(SRM_CLIENT, HTTP_CLIENT, target_file_name, TRANSFER_PROTOCOL)
-			cleanup(SRM_CLIENT, target_file_name)
-
+			file_transfer_in(self.SRMclient, self.HTTPclient, self.target_file_surl, TRANSFER_PROTOCOL)
 		except Exception, e:
 			error("Error executing file-transfer-in: %s" % traceback.format_exc())
+
+	def __del__(self):
+		cleanup(self.SRMclient, self.target_file_surl)
