@@ -43,27 +43,17 @@ TEST_DIR_WIDTH  = int(props['ls.test_directory_width'])
 TEST_DIR_HEIGHT = int(props['ls.test_directory_height'])
 
 DO_SETUP        = props['ls.do_setup']
+DO_CLEANUP      = props['ls.do_cleanup']
 
 DIRECTORY_NAME  = "testdir"
-
-def generateSURLs(height):
-    surls = []
-    parent_surl = "%s/%s/%s" % (SRM_ENDPOINT, TEST_STORAGEAREA, TEST_DIRECTORY)
-    surls.append(parent_surl)
-    for i in range(1, height + 1):
-        surl = "%s/%s" % (parent_surl,DIRECTORY_NAME)
-        surls.append(surl)
-        parent_surl = surl
-    return surls
-
-SURLS           = generateSURLs(TEST_DIR_HEIGHT)
+FILE_PREFIX  = "file"
 
 SRM_SUCCESS     = TStatusCode.SRM_SUCCESS
 WAITING_STATES  = [TStatusCode.SRM_REQUEST_QUEUED, TStatusCode.SRM_REQUEST_INPROGRESS]
 
 SRM_CLIENT      = SRMClientFactory.newSRMClient(FRONTEND_ENDPOINT,PROXY_FILE)
 
-DO_INIT         = 1
+TEST_DIRECTORY_SURL = "%s/%s/%s" % (SRM_ENDPOINT, TEST_STORAGEAREA, TEST_DIRECTORY)
 
 def status_code(resp):
 
@@ -85,87 +75,127 @@ def create_test_directory_if_needed(SRM_client):
     SRM_client.srmMkdir(test_dir_surl)
 
 def create_directory(parentdir_surl,client):
-
-    target_dir_name = DIRECTORY_NAME;
-    target_dir_surl = "%s/%s" % (parentdir_surl, target_dir_name)
-    if (DO_SETUP == "yes"):
-        client.srmMkdir(target_dir_surl)
+    target_dir_surl = "%s/%s" % (parentdir_surl, DIRECTORY_NAME)
+    mkdir_runner = mkdir.TestRunner()
+    res = mkdir_runner(target_dir_surl, client)
+    debug("mkdir returned status: %s (expl: %s)" % (status_code(res), explanation(res)))
+    info("CREATED DIR %s" % parentdir_surl)
     return target_dir_surl
 
 def upload_file(parentdir_surl,filename,client):
 
     debug("Upload file %s into %s" % (filename,parentdir_surl))
     target_file_surl = "%s/%s" % (parentdir_surl, filename)
-    if (DO_SETUP == "yes"):
-        ptp_runner = ptp.TestRunner()
-        res = ptp_runner([target_file_surl], [], client)
-        sptp_runner = sptp.TestRunner()
-        while True:
-            sres = sptp_runner(res,client)
-            if status_code(sres) in WAITING_STATES:
-                time.sleep(1)
-            else:
-                break
-        check_success(sres, "Error in PtP for surl: %s." % target_file_surl)
-        pd_runner = pd.TestRunner()
-        res = pd_runner([target_file_surl], res.requestToken, client)
-        check_success(res, "Error in PD for surl: %s" % target_file_surl)
+    ptp_runner = ptp.TestRunner()
+    res = ptp_runner([target_file_surl], [], client)
+    sptp_runner = sptp.TestRunner()
+    while True:
+        sres = sptp_runner(res,client)
+        if status_code(sres) in WAITING_STATES:
+            time.sleep(1)
+        else:
+            break
+    check_success(sres, "Error in PtP for surl: %s." % target_file_surl)
+    pd_runner = pd.TestRunner()
+    res = pd_runner([target_file_surl], res.requestToken, client)
+    check_success(res, "Error in PD for surl: %s" % target_file_surl)
+    info("UPLOADED %s to %s" % (filename, target_file_surl))
     debug("File %s successfully uploaded." % filename)
+    return target_file_surl
 
 def fill_test_directory(current_level,parent_surl,width,height,client):
-    
-    next_surl = create_directory(parent_surl,client)
+    next_surl = create_directory(parent_surl, client)
     for i in range(1, width + 1):
-        filename = str(uuid.uuid4());
-        upload_file(parent_surl,filename,client)
+        file_name = "%s_%d" % (FILE_PREFIX, i)
+        upload_file(parent_surl,file_name,client)
     current_level = current_level + 1
     if (current_level < height):
         fill_test_directory(current_level, next_surl, width, height, client)
 
-def setup(SRM_client):
+def generateSURLs(height, width):
+    surls = []
+    parent_surl = TEST_DIRECTORY_SURL
+    surls.append(parent_surl)
+    debug("appended: %s" % parent_surl)
+    for i in range(1, height + 1):
+        dsurl = "%s/%s" % (parent_surl, DIRECTORY_NAME)
+        surls.append(dsurl)
+        debug("appended: %s" % dsurl)
+        for j in range(1, width + 1):
+            fsurl = "%s/%s_%d" % (parent_surl, FILE_PREFIX, j)
+            surls.append(fsurl)
+            debug("appended: %s" % fsurl)
+        parent_surl = dsurl
+    return surls
+
+def setup(client, base_dir_surl, height, width):
 
     info("Setting up ls test.")
-    create_test_directory_if_needed(SRM_client)
-    base_dir_surl = "%s/%s/%s" % (SRM_ENDPOINT, TEST_STORAGEAREA, TEST_DIRECTORY)
-    SURLS.append(base_dir_surl)
-    fill_test_directory(0,base_dir_surl,TEST_DIR_WIDTH,TEST_DIR_HEIGHT,SRM_client)
+    create_test_directory_if_needed(client)
+    if (DO_SETUP == "yes"):
+        fill_test_directory(0, base_dir_surl, width, height, client)
     info("ls setup completed successfully.")
 
-def ls_test(client):
+def cleanup(client, base_dir_surl):
 
-    i = random.randint(1, TEST_DIR_HEIGHT) - 1
-    debug("i = %s" % i)
-    base_dir_surl = SURLS[i]
-    #base_dir_surl = "%s/%s/%s" % (SRM_ENDPOINT, TEST_STORAGEAREA, TEST_DIRECTORY)
+    info("Cleaning up ls test.")
+    if (DO_CLEANUP == "yes"):
+        client.srmRmdir(base_dir_surl, 1)
+    info("ls cleanup completed successfully.")
+
+def ls_test(client, surl):
+
     ls_runner = ls.TestRunner()
-    ls_res = ls_runner(base_dir_surl, client)
-    check_success(ls_res, "Ls failure on surl: %s" % base_dir_surl)
+    ls_res = ls_runner(surl, client)
+    check_success(ls_res, "Ls failure on surl: %s" % surl)
 
 
 class TestRunner:
 
     def __init__(self):
+        self.surls = generateSURLs(TEST_DIR_HEIGHT, TEST_DIR_WIDTH)
+        debug("SURLS: %s" % self.surls)
         self.SetupCompleteBarrier = grinder.barrier("Init barrier")
+        self.ReadyToCleanUpBarrier = grinder.barrier("Cleanup barrier")
+        self.numruns = int(props["grinder.runs"])
 
     def __call__(self):
         
-        if (grinder.getRunNumber() == 0):
-            debug("init method for thread %s process %s agent %s" % (grinder.getThreadNumber(),grinder.getProcessNumber(),grinder.getAgentNumber()))
-            id = grinder.getThreadNumber() + grinder.getProcessNumber() + grinder.getAgentNumber()
-            debug("id is %s" % id)
-            if (id == 0):
-                 setup(SRM_CLIENT)
-                 info("SURLS: %s" % SURLS)
-            debug("before waiting")
+        if (self.isFirstRun()):
+            if (self.isTheInitializer()):
+                 setup(SRM_CLIENT,TEST_DIRECTORY_SURL,TEST_DIR_HEIGHT,TEST_DIR_WIDTH)
+                 info("A:%s,P:%s,T:%s setup done!")
+            debug("waiting all the other threads")
             self.SetupCompleteBarrier.await()
-            debug("after waiting")
+            debug("ok, go!")
 
         try:
             test = Test(TestID.LS_TEST, "StoRM LS test")
             test.record(ls_test)
-
-            ls_test(SRM_CLIENT)
+            i = random.randint(1, TEST_DIR_HEIGHT*TEST_DIR_WIDTH) - 1
+            info("[i = %d] Ls on %s" % (i, self.surls[i]))
+            ls_test(SRM_CLIENT, self.surls[i])
 
         except Exception, e:
             error("Error executing ls test: %s" % traceback.format_exc())
             raise
+
+        if (self.isLastRun()):
+            debug("waiting all the other threads")
+            self.ReadyToCleanUpBarrier.await()
+            if (self.isTheInitializer()):
+                 cleanup(SRM_CLIENT,TEST_DIRECTORY_SURL)
+                 info("A:%s,P:%s,T:%s cleanup done!")
+            debug("ok, finished!")
+
+    def isFirstRun(self):
+        return grinder.getRunNumber() == 0
+
+    def isLastRun(self):
+        return grinder.getRunNumber() == (self.numruns - 1)
+
+    def isTheInitializer(self):
+        debug("I am thread %s process %s agent %s" % (grinder.getThreadNumber(),grinder.getProcessNumber(),grinder.getAgentNumber()))
+        id = grinder.getThreadNumber() + grinder.getProcessNumber() + grinder.getAgentNumber()
+        debug("My id is %s" % id)
+        return id == 0

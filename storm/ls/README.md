@@ -30,11 +30,12 @@ common.frontend_port = 8444
 Edit the `storm/base/common.properties` file and set 
 these properties as you need.
 
-## Setup
+## Setup and cleanup
 
-User can enable the setup phase. Only one thread will do this if the `ls.do_setup` variable's value is "yes".
-To disable setup phase, set `ls.do_setup = no`.
+User can enable the setup and/or the cleanup phases. Only one thread will do these. 
+Set `ls.do_setup` variable's value to "yes" to enable setup phase.
 Customize `ls.test_directory_width` and `ls.test_directory_height` to create a deeper test directory tree.
+To enable the cleanup phase, set `ls.do_cleanup = yes`.
 
 ## Run the grinder console
 
