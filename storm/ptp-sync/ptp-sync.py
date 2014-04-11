@@ -96,12 +96,16 @@ def cleanup(client, target_file_name):
     debug("Cleaned up %s" % target_file_surl)
 
 class TestRunner:
+
+    def __init__(self):
+        setup(SRM_CLIENT)
+    
+
     def __call__(self):
         try:
             test = Test(TestID.PTP_SYNC_PD, "StoRM PTP Sync test")
             test.record(ptp_sync)
 
-            setup(SRM_CLIENT)
             file_name = ptp_sync(SRM_CLIENT)
             cleanup(SRM_CLIENT, file_name)
 
