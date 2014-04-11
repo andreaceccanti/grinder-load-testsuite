@@ -79,3 +79,4 @@ class TestID():
     RM_FILES  = 108
     LS_TEST   = 109
     MIX_DAV   = 110
+    PTG_ASYNC = 111
