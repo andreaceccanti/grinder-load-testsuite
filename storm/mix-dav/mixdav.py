@@ -36,8 +36,6 @@ WEBDAV_ENDPOINT = "https://%s:%s" % (props['common.gridhttps_host'],props['commo
 # Test specific variables
 TEST_DIRECTORY  = props['mixdav.test_directory']
 
-HTTP_CLIENT     = WebDAVClientFactory.newWebDAVClient(WEBDAV_ENDPOINT,PROXY_FILE)
-
 def check_http_success(statusCode, expected_code, error_msg):
     if (statusCode != expected_code):
         msg = "%s. Status code is %s instead of %s" % (error_msg, statusCode, expected_code)
@@ -45,10 +43,10 @@ def check_http_success(statusCode, expected_code, error_msg):
 
 def create_test_directory_if_needed(DAV_client):
     test_dir_url = "%s/webdav/%s/%s" % (WEBDAV_ENDPOINT, TEST_STORAGEAREA, TEST_DIRECTORY)
-    statusCode = DAV_client.get(test_dir_url)
+    http_get_runner=http_get.TestRunner()
+    statusCode = http_get_runner(test_dir_url,DAV_client)
     if (statusCode != 200):
-        statusCode = DAV_client.mkcol(test_dir_url)
-        check_http_success(statusCode, 201)
+        DAV_client.mkcol(test_dir_url)
 
 def create_local_file_to_upload():
     local_file_path = "/tmp/%s" % str(uuid.uuid4());
@@ -59,7 +57,6 @@ def create_local_file_to_upload():
 
 def setup(DAV_client):
     info("Setting up Mix-WebDAV test.")
-    create_test_directory_if_needed(DAV_client)
     local_file_path = create_local_file_to_upload()
     info("Mix-WebDAV test setup completed.")
     return local_file_path
@@ -96,13 +93,16 @@ def mix_dav(DAV_client, local_file_path):
 
 class TestRunner:
 
-	def __call__(self):		
-		try:
-			test = Test(TestID.MIX_DAV, "StoRM Mix WebDAV test")
-			test.record(mix_dav)
+    def __init__(self):
+        self.HTTP_Client = WebDAVClientFactory.newWebDAVClient(WEBDAV_ENDPOINT,PROXY_FILE)
+        create_test_directory_if_needed(self.HTTP_Client)
+        self.local_file_path = setup(self.HTTP_Client)
 
-			local_file_path = setup(HTTP_CLIENT)
-			mix_dav(HTTP_CLIENT, local_file_path)
+    def __call__(self):
+        try:
+            test = Test(TestID.MIX_DAV, "StoRM Mix WebDAV test")
+            test.record(mix_dav)
+            mix_dav(self.HTTP_Client, self.local_file_path)
 
-		except Exception, e:
-			error("Error executing file-transfer-in: %s" % traceback.format_exc())
+        except Exception, e:
+            error("Error executing mix-dav: %s" % traceback.format_exc())
