@@ -50,6 +50,9 @@ SLEEP_THRESHOLD = int(props['ftin.sleep_threshold'])
 ## Sleep time (seconds)
 SLEEP_TIME      = float(props['ftin.sleep_time'])
 
+## Setup once: setup done at init time or each run
+SETUP_ONCE      = props['ftin.setup_once']
+
 WAITING_STATES  = [TStatusCode.SRM_REQUEST_QUEUED, TStatusCode.SRM_REQUEST_INPROGRESS]
 SRM_SUCCESS     = TStatusCode.SRM_SUCCESS
 
@@ -77,12 +80,10 @@ def create_test_directory_if_needed(SRMclient):
 def setup(client):
     info("Setting up file-transfer-in test.")
     
-    create_test_directory_if_needed(client)
-    
     target_file_name = str(uuid.uuid4());
     target_file_surl = "%s/%s/%s/%s" % (SRM_ENDPOINT, TEST_STORAGEAREA, TEST_DIRECTORY, target_file_name)
 
-    info("Creating target file: " + target_file_surl)
+    info("Creating target file: %s" % target_file_surl)
 
     ptp_runner = ptp.TestRunner()
     res = ptp_runner([target_file_surl], [], client)
@@ -98,7 +99,7 @@ def setup(client):
 
     pd_runner = pd.TestRunner()
     res = pd_runner([target_file_surl], res.requestToken, client)
-    check_success(res, "Error in PD for surl: %s" % target_file_surl)
+    check_success(res, "Error in PD for surl: " + target_file_surl)
 
     info("Target file successfully created.")
 
@@ -158,15 +159,22 @@ class TestRunner:
 	def __init__(self):
 		self.SRMclient = SRMClientFactory.newSRMClient(FRONTEND_ENDPOINT,PROXY_FILE)
 		self.HTTPclient = WebDAVClientFactory.newWebDAVClient(FILETRANSFER_ENDPOINT,PROXY_FILE)
-		self.target_file_surl = setup(self.SRMclient)
+		create_test_directory_if_needed(self.SRMclient)
+		if (SETUP_ONCE == "yes"):
+			self.target_file_surl = setup(self.SRMclient)
 
 	def __call__(self):
 		try:
+			if (SETUP_ONCE != "yes"):
+				self.target_file_surl = setup(self.SRMclient)
 			test = Test(TestID.TXFER_IN, "StoRM file-transfer IN")
 			test.record(file_transfer_in)
 			file_transfer_in(self.SRMclient, self.HTTPclient, self.target_file_surl, TRANSFER_PROTOCOL)
+			if (SETUP_ONCE != "yes"):
+				cleanup(self.SRMclient, self.target_file_surl)
 		except Exception, e:
 			error("Error executing file-transfer-in: %s" % traceback.format_exc())
 
 	def __del__(self):
-		cleanup(self.SRMclient, self.target_file_surl)
+		if (SETUP_ONCE == "yes"):
+			cleanup(self.SRMclient, self.target_file_surl)
