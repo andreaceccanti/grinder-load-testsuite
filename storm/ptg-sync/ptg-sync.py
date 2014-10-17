@@ -56,7 +56,7 @@ SLEEP_TIME = float(props['ptg-sync.sleep_time'])
 DO_HANDSHAKE = bool(props['ptg-sync.do_handshake'])
 
 ## Number of files created in the ptg directory
-NUM_FILES = 50
+NUM_FILES = int(props['ptg-sync.num_files'])
 
 ## The SRM client instance
 SRM_CLIENT = SRMClientFactory.newSRMClient(FRONTEND_ENDPOINT,PROXY_FILE)
@@ -68,7 +68,7 @@ def explanation(resp):
     return resp.returnStatus.explanation
 
 def compute_surls(base_dir):
-    random_index = random.randint(1, NUM_FILES)
+    random_index = random.randrange(0, NUM_FILES)
     surl = "%s/f%d" % (base_dir, random_index)
     return [surl]
 
