@@ -1,17 +1,11 @@
 from common import TestID, load_common_properties, get_proxy_file_path
-from eu.emi.security.authn.x509.impl import PEMCredential
 from exceptions import Exception
 from gov.lbl.srm.StorageResourceManager import TStatusCode
-from jarray import array
-from java.io import FileInputStream
-from javax.net.ssl import X509ExtendedKeyManager
-from net.grinder.plugin.http import HTTPRequest
 from net.grinder.script import Test
 from net.grinder.script.Grinder import grinder
-from org.italiangrid.srm.client import SRMClient, SRMClientFactory
+from org.italiangrid.srm.client import SRMClientFactory
 import ptg,rmdir,sptg,sptp,mkdir,ptp,pd
 import random
-import string
 import time
 import traceback
 import uuid
@@ -29,12 +23,28 @@ props          = grinder.properties
 # Proxy authorized to write on SRM/WEBDAV endpoints
 PROXY_FILE      = get_proxy_file_path()
 
+# SRM clients (one per configured frontend)
+SRM_CLIENTS = []
+
+def init_srm_clients():
+    frontends = [f.strip() for f in props['ptg-sync.frontends'].split(',')]
+
+    info("frontends: %s" % frontends)
+
+    for f in frontends:
+        endpoint = "https://%s" % f
+        client = SRMClientFactory.newSRMClient(endpoint, PROXY_FILE)
+        SRM_CLIENTS.append((endpoint,client))
+
+    info("SRM clients: %s" % SRM_CLIENTS)
+
+init_srm_clients()
+
 # Common variables:
 TEST_STORAGEAREA = props['common.test_storagearea']
 
 ## Endpoints
 FILETRANSFER_ENDPOINT = "https://%s:%s" % (props['common.gridhttps_host'],props['common.gridhttps_ssl_port'])
-FRONTEND_ENDPOINT = "https://%s:%s" % (props['common.frontend_host'],props['common.frontend_port'])
 SRM_ENDPOINT    = "srm://%s:%s" % (props['common.frontend_host'],props['common.frontend_port'])
 
 
@@ -58,8 +68,8 @@ DO_HANDSHAKE = bool(props['ptg-sync.do_handshake'])
 ## Number of files created in the ptg directory
 NUM_FILES = int(props['ptg-sync.num_files'])
 
-## The SRM client instance
-SRM_CLIENT = SRMClientFactory.newSRMClient(FRONTEND_ENDPOINT,PROXY_FILE)
+def get_client():
+    return random.choice(SRM_CLIENTS)
 
 def status_code(resp):
     return resp.returnStatus.statusCode
@@ -77,9 +87,12 @@ def check_success(res, msg):
         error_msg = "%s. %s (expl: %s)" % (msg, status_code(res), explanation(res))
         raise Exception(error_msg)
 
-def setup(client):
+def setup():
 
     info("Setting up ptg-sync test.")
+    endpoint,client = get_client()
+
+    debug("Client endpoint: %s" % endpoint)
 
     test_dir = "%s/%s/%s" % (SRM_ENDPOINT, TEST_STORAGEAREA, TEST_DIRECTORY)
     mkdir_runner = mkdir.TestRunner()
@@ -104,8 +117,9 @@ def setup(client):
     res = ptp_runner(surls,[],client)
 
     sptp_runner = sptp.TestRunner()
+
     while True:
-	sres = sptp_runner(res,client)
+        sres = sptp_runner(res,client)
         if status_code(sres) in WAITING_STATES:
             time.sleep(1)
         else:
@@ -120,8 +134,10 @@ def setup(client):
 
     return base_dir,surls
 
-def cleanup(client, base_dir):
+def cleanup(base_dir):
     info("Cleaning up for ptg-sync test.")
+
+    endpoint, client = get_client()
 
     rmdir_runner = rmdir.TestRunner()
     res = rmdir_runner(base_dir, client, True)
@@ -130,7 +146,8 @@ def cleanup(client, base_dir):
         raise Exception("srmRmdir failed for %s. %s %s" %(base_dir, status_code(res), explanation(res)))
     info("ptg-sync cleanup completed succesfully.")
 
-def ptg_sync(client, base_dir):
+def ptg_sync(base_dir):
+    endpoint, client = get_client()
     surls = compute_surls(base_dir)
     ptg_runner = ptg.TestRunner()
     ptg_res = ptg_runner(surls, [], client)
@@ -160,11 +177,11 @@ class TestRunner:
             test = Test(TestID.PTG_SYNC, "StoRM Sync PTG test")
             test.record(ptg_sync)
             if DO_HANDSHAKE:
-                SRM_CLIENT.srmPing();
+                get_client()[1].srmPing()
 
-            (base_dir, surls) = setup(SRM_CLIENT)
-            ptg_sync(SRM_CLIENT, base_dir)
-            cleanup(SRM_CLIENT, base_dir)
+            (base_dir, surls) = setup()
+            ptg_sync(base_dir)
+            cleanup(base_dir)
 
-        except Exception, e:
+        except Exception:
             error("Error executing ptg-sync: %s" % traceback.format_exc())
