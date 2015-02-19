@@ -4,7 +4,7 @@ from gov.lbl.srm.StorageResourceManager import TStatusCode
 from net.grinder.script import Test
 from net.grinder.script.Grinder import grinder
 from org.italiangrid.srm.client import SRMClientFactory
-import ptg,rmdir,sptg,sptp,mkdir,ptp,pd
+import ptg,rmdir,sptg,sptp,mkdir,ptp,pd,rf
 import random
 import time
 import traceback
@@ -155,6 +155,7 @@ def ptg_sync(base_dir):
 
     counter = 0
 
+    token = ptg_res.requestToken
     while True:
         res =  sptg_runner(ptg_res, client)
         counter = counter + 1
@@ -170,6 +171,11 @@ def ptg_sync(base_dir):
 
     debug("SPTG result (after %d invocations): %s: %s" %
             (counter, res.returnStatus.statusCode, res.returnStatus.explanation))
+
+    for i in range(0, len(surls)):
+        rf_runner = rf.TestRunner()
+        rf_res = rf_runner(surls[i],token,client)
+        check_success(rf_res, "Error in RF for surl %s and token %s" % (surls[i], token))
 
 class TestRunner:
     def __call__(self):
