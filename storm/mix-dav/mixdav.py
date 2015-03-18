@@ -75,7 +75,11 @@ def mix_dav(DAV_client, local_file_path):
     http_put_runner=http_put.TestRunner()
     statusCode = http_put_runner(target_file_url,local_file_path,DAV_client)
     check_http_success(statusCode, 201, "Error in HTTP PUT")
-    
+
+    http_put_runner=http_put.TestRunner()
+    statusCode = http_put_runner(target_file_url,local_file_path,DAV_client)
+    check_http_success(statusCode, 204, "Error in HTTP PUT")
+
     http_get_runner=http_get.TestRunner()
     statusCode = http_get_runner(target_file_url,DAV_client)
     check_http_success(statusCode, 200, "Error in HTTP GET")

@@ -80,3 +80,5 @@ class TestID():
     LS_TEST   = 109
     MIX_DAV   = 110
     PTG_ASYNC = 111
+    GET_DAV   = 112
+    PUT_DAV   = 113
