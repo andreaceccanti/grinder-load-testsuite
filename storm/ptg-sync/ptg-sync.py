@@ -16,22 +16,22 @@ debug          = grinder.logger.debug
 props          = grinder.properties
 
 def get_test_directory():
-	return get_prop('TESTSUITE_TEST_DIRECTORY', props["ptg-sync.test_directory"])
+    return get_prop('TESTSUITE_TEST_DIRECTORY', props["ptg-sync.test_directory"])
 
 def get_test_sleep_threshold():
-	return int(get_prop('TESTSUITE_TEST_SLEEP_THRESHOLD', props["ptg-sync.sleep_threshold"]))
+    return int(get_prop('TESTSUITE_TEST_SLEEP_THRESHOLD', props["ptg-sync.sleep_threshold"]))
 
 def get_test_sleep_time():
-	return float(get_prop('TESTSUITE_TEST_SLEEP_TIME', props["ptg-sync.sleep_time"]))
+    return float(get_prop('TESTSUITE_TEST_SLEEP_TIME', props["ptg-sync.sleep_time"]))
 
 def get_test_do_handshake():
-	return bool(get_prop('TESTSUITE_TEST_DO_HANDSHAKE', props["ptg-sync.do_handshake"]))
+    return bool(get_prop('TESTSUITE_TEST_DO_HANDSHAKE', props["ptg-sync.do_handshake"]))
 
 def get_test_num_files():
-	return int(get_prop('TESTSUITE_TEST_NUM_FILES', props["ptg-sync.num_files"]))
+    return int(get_prop('TESTSUITE_TEST_NUM_FILES', props["ptg-sync.num_files"]))
 
 def init_srm_clients(fe_list):
-	clients = []
+    clients = []
     frontends = [f.strip() for f in fe_list.split(',')]
     debug("frontends: %s" % frontends)
     for f in frontends:
@@ -91,12 +91,12 @@ def setup():
 
     info("Setting up ptg-sync test.")
 
-	endpoint,client = get_client()
-	debug("Client endpoint: %s" % endpoint)
+    endpoint,client = get_client()
+    debug("Client endpoint: %s" % endpoint)
 
     test_dir_surl = get_surl(endpoint, get_test_storagearea(), get_test_directory())
 
-	mkdir_runner = mkdir.TestRunner()
+    mkdir_runner = mkdir.TestRunner()
     res = mkdir_runner(test_dir_surl,client)
 
     base_dir_surl = "%s/%s" % (test_dir_surl, str(uuid.uuid4()))
@@ -106,7 +106,7 @@ def setup():
     check_success(res, "Error creating %s" % base_dir_surl)
     info("Base directory succesfully created.")
 
-    surls = []
+    ssurls = []
 
     for i in range(0, NUM_FILES):
         f_surl = "%s/f%d" % (base_dir_surl, i)

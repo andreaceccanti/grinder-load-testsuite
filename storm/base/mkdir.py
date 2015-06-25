@@ -19,27 +19,27 @@ props = grinder.properties
 
 def mkdir(surl, client):
 	
-	debug("Creating directory: %s" % surl)
+    debug("Creating directory: %s" % surl)
 
-	res= client.srmMkdir(surl)
+    res= client.srmMkdir(surl)
 
-	debug("Directory created")
+    debug("Directory created")
 
-	return res
+    return res
 	
 
 class TestRunner:
 
-	def __call__(self, surl, client):
+    def __call__(self, surl, client):
 
-		if client is None:
-			raise Exception("Please set a non-null SRM client!")
+        if client is None:
+            raise Exception("Please set a non-null SRM client!")
 
-		test = Test(TestID.MKDIR, "StoRM MKDIR")
-		test.record(mkdir)
-		
-		try:
-			return mkdir(surl, client)
-		except Exception:
-			error("Error executing mkdir: %s" % traceback.format_exc())
-			raise		
+        test = Test(TestID.MKDIR, "StoRM MKDIR")
+        test.record(mkdir)
+
+        try:
+            return mkdir(surl, client)
+        except Exception:
+            error("Error executing mkdir: %s" % traceback.format_exc())
+            raise
