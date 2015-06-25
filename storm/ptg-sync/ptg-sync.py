@@ -52,10 +52,6 @@ info("SRM clients: %s" % clients)
 # Common variables:
 TEST_STORAGEAREA = get_test_storagearea()
 
-## Endpoints
-FILETRANSFER_ENDPOINT = get_common_prop("storm_dav_endpoint")
-SRM_ENDPOINT    = get_common_prop("storm_srm_endpoint")
-
 WAITING_STATES = [TStatusCode.SRM_REQUEST_QUEUED, TStatusCode.SRM_REQUEST_INPROGRESS]
 SRM_SUCCESS  = TStatusCode.SRM_SUCCESS
 
