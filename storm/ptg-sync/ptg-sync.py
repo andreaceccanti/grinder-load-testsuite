@@ -1,4 +1,4 @@
-from common import TestID, load_common_properties, get_proxy_file_path
+from common import *
 from exceptions import Exception
 from gov.lbl.srm.StorageResourceManager import TStatusCode
 from net.grinder.script import Test
@@ -10,63 +10,67 @@ import time
 import traceback
 import uuid
 
+error          = grinder.logger.error
+info           = grinder.logger.info
+debug          = grinder.logger.debug
+props          = grinder.properties
+
+def get_test_directory():
+	return get_prop('TESTSUITE_TEST_DIRECTORY', props["ptg-sync.test_directory"])
+
+def get_test_sleep_threshold():
+	return int(get_prop('TESTSUITE_TEST_SLEEP_THRESHOLD', props["ptg-sync.sleep_threshold"]))
+
+def get_test_sleep_time():
+	return float(get_prop('TESTSUITE_TEST_SLEEP_TIME', props["ptg-sync.sleep_time"]))
+
+def get_test_do_handshake():
+	return bool(get_prop('TESTSUITE_TEST_DO_HANDSHAKE', props["ptg-sync.do_handshake"]))
+
+def get_test_num_files():
+	return int(get_prop('TESTSUITE_TEST_NUM_FILES', props["ptg-sync.num_files"]))
+
+def init_srm_clients(fe_list):
+	clients = []
+    frontends = [f.strip() for f in fe_list.split(',')]
+    debug("frontends: %s" % frontends)
+    for f in frontends:
+        endpoint = "https://%s" % f
+        client = SRMClientFactory.newSRMClient(endpoint, get_proxy_file_path())
+        clients.append((endpoint,client))
+    return clients
+
 ## This loads the base properties inside grinder properties
 ## Should be left at the top of the script execution
 load_common_properties()
 
-error          = grinder.logger.error
-info           = grinder.logger.info
-debug          = grinder.logger.debug
-
-props          = grinder.properties
-
-# Proxy authorized to write on SRM/WEBDAV endpoints
-PROXY_FILE      = get_proxy_file_path()
-
 # SRM clients (one per configured frontend)
-SRM_CLIENTS = []
+SRM_CLIENTS = init_srm_clients(get_storm_fe_endpoint_list())
 
-def init_srm_clients():
-    frontends = [f.strip() for f in props['ptg-sync.frontends'].split(',')]
-
-    info("frontends: %s" % frontends)
-
-    for f in frontends:
-        endpoint = "https://%s" % f
-        client = SRMClientFactory.newSRMClient(endpoint, PROXY_FILE)
-        SRM_CLIENTS.append((endpoint,client))
-
-    info("SRM clients: %s" % SRM_CLIENTS)
-
-init_srm_clients()
+info("SRM clients: %s" % clients)
 
 # Common variables:
-TEST_STORAGEAREA = props['common.test_storagearea']
+TEST_STORAGEAREA = get_test_storagearea()
 
 ## Endpoints
-FILETRANSFER_ENDPOINT = "https://%s:%s" % (props['common.gridhttps_host'],props['common.gridhttps_ssl_port'])
-SRM_ENDPOINT    = "srm://%s:%s" % (props['common.frontend_host'],props['common.frontend_port'])
-
-
-# Test specific variables
-TEST_DIRECTORY  = props['ptg-sync.test_directory']
+FILETRANSFER_ENDPOINT = get_common_prop("storm_dav_endpoint")
+SRM_ENDPOINT    = get_common_prop("storm_srm_endpoint")
 
 WAITING_STATES = [TStatusCode.SRM_REQUEST_QUEUED, TStatusCode.SRM_REQUEST_INPROGRESS]
-
 SRM_SUCCESS  = TStatusCode.SRM_SUCCESS
 
 # Start sleeping between sptg requests after this number
-SLEEP_THRESHOLD = int(props['ptg-sync.sleep_threshold'])
+SLEEP_THRESHOLD = get_test_sleep_threshold()
 
 ## Sleep time (seconds)
-SLEEP_TIME = float(props['ptg-sync.sleep_time'])
+SLEEP_TIME = get_test_sleep_time()
 
 ## Perform an srmPing before running the test to
 ## rule out the handshake time from the stats
-DO_HANDSHAKE = bool(props['ptg-sync.do_handshake'])
+DO_HANDSHAKE = get_test_do_handshake()
 
 ## Number of files created in the ptg directory
-NUM_FILES = int(props['ptg-sync.num_files'])
+NUM_FILES = get_test_num_files()
 
 def get_client():
     return random.choice(SRM_CLIENTS)
@@ -90,25 +94,26 @@ def check_success(res, msg):
 def setup():
 
     info("Setting up ptg-sync test.")
-    endpoint,client = get_client()
 
-    debug("Client endpoint: %s" % endpoint)
+	endpoint,client = get_client()
+	debug("Client endpoint: %s" % endpoint)
 
-    test_dir = "%s/%s/%s" % (SRM_ENDPOINT, TEST_STORAGEAREA, TEST_DIRECTORY)
-    mkdir_runner = mkdir.TestRunner()
-    res = mkdir_runner(test_dir,client)
+    test_dir_surl = get_surl(endpoint, get_test_storagearea(), get_test_directory())
 
-    base_dir = "%s/%s" % (test_dir, str(uuid.uuid4()))
-    info("Creating thread specific dir: " + base_dir)
+	mkdir_runner = mkdir.TestRunner()
+    res = mkdir_runner(test_dir_surl,client)
 
-    res = mkdir_runner(base_dir,client)
-    check_success(res, "Error creating %s" % base_dir)
+    base_dir_surl = "%s/%s" % (test_dir_surl, str(uuid.uuid4()))
+    info("Creating thread specific dir: " + base_dir_surl)
+
+    res = mkdir_runner(base_dir_surl,client)
+    check_success(res, "Error creating %s" % base_dir_surl)
     info("Base directory succesfully created.")
 
     surls = []
 
     for i in range(0, NUM_FILES):
-        f_surl = "%s/f%d" % (base_dir, i)
+        f_surl = "%s/f%d" % (base_dir_surl, i)
         if i == 0:
             info("Creating surls like this: "+ f_surl)
         surls.append(f_surl)
@@ -132,7 +137,7 @@ def setup():
     check_success(res, "Error in PD for surls: %s" % surls)
     info("ptg-sync setup completed succesfully.")
 
-    return base_dir,surls
+    return base_dir_surl,surls
 
 def cleanup(base_dir):
     info("Cleaning up for ptg-sync test.")
@@ -146,9 +151,9 @@ def cleanup(base_dir):
         raise Exception("srmRmdir failed for %s. %s %s" %(base_dir, status_code(res), explanation(res)))
     info("ptg-sync cleanup completed succesfully.")
 
-def ptg_sync(base_dir):
+def ptg_sync(base_dir_surl):
     endpoint, client = get_client()
-    surls = compute_surls(base_dir)
+    surls = compute_surls(base_dir_surl)
     ptg_runner = ptg.TestRunner()
     ptg_res = ptg_runner(surls, [], client)
     sptg_runner = sptg.TestRunner()
@@ -185,9 +190,9 @@ class TestRunner:
             if DO_HANDSHAKE:
                 get_client()[1].srmPing()
 
-            (base_dir, surls) = setup()
-            ptg_sync(base_dir)
-            cleanup(base_dir)
+            (base_dir_surl, surls) = setup()
+            ptg_sync(base_dir_surl)
+            cleanup(base_dir_surl)
 
         except Exception:
             error("Error executing ptg-sync: %s" % traceback.format_exc())

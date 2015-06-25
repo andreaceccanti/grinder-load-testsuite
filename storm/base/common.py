@@ -6,14 +6,34 @@ import os
 
 PROPERTIES = "common.properties"
 
+props = grinder.properties
+
 def get_logger(name):
     return LoggerFactory.getLogger(name)
 
+def get_prop(name, default):
+	res = os.getenv(name)
+	if res is None:
+		return default
+	return res
+
 def get_proxy_file_path():
-    user_proxy = os.getenv('X509_USER_PROXY')
-    if user_proxy is None:
-        user_proxy = "/tmp/x509up_u%s" % os.geteuid()
-    return user_proxy
+	return get_prop('X509_USER_PROXY', "/tmp/x509up_u%s" % os.geteuid())
+
+def get_storm_be_hostname():
+	return get_prop('STORM_BE_HOSTNAME', props["common.default.storm_be_hostname"])
+
+def get_storm_fe_endpoint_list():
+	return get_prop('STORM_FE_ENDPOINT_LIST', props["common.default.storm_fe_endpoint_list"])
+
+def get_storm_dav_endpoint_list():
+	return get_prop('STORM_DAV_ENDPOINT_LIST', props["common.default.storm_dav_endpoint_list"])
+
+def get_test_storagearea():
+	return get_prop('TEST_STORAGEAREA', props["common.default.test_storagearea"])
+
+def get_surl(endpoint, storagearea, path):
+	return "srm://%s/%s/%s" % (endpoint, storagearea, path)
 
 def log_surl_call_result(op_name, res, logger=None):
 
