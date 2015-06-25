@@ -56,16 +56,20 @@ SRM_SUCCESS  = TStatusCode.SRM_SUCCESS
 
 # Start sleeping between sptg requests after this number
 SLEEP_THRESHOLD = get_test_sleep_threshold()
+info("SLEEP_THRESHOLD = %s" % SLEEP_THRESHOLD)
 
 ## Sleep time (seconds)
 SLEEP_TIME = get_test_sleep_time()
+info("SLEEP_TIME = %s" % SLEEP_TIME)
 
 ## Perform an srmPing before running the test to
 ## rule out the handshake time from the stats
 DO_HANDSHAKE = get_test_do_handshake()
+info("DO_HANDSHAKE = %s" % DO_HANDSHAKE)
 
 ## Number of files created in the ptg directory
 NUM_FILES = get_test_num_files()
+info("NUM_FILES = %s" % NUM_FILES)
 
 def get_client():
     return random.choice(SRM_CLIENTS)
@@ -105,7 +109,7 @@ def setup():
     check_success(res, "Error creating %s" % base_dir_surl)
     info("Base directory succesfully created.")
 
-    ssurls = []
+    surls = []
 
     for i in range(0, NUM_FILES):
         f_surl = "%s/f%d" % (base_dir_surl, i)
@@ -186,6 +190,7 @@ class TestRunner:
                 get_client()[1].srmPing()
 
             (base_dir_surl, surls) = setup()
+            info("base_dir_surl = %s" % base_dir_surl)
             ptg_sync(base_dir_surl)
             cleanup(base_dir_surl)
 
