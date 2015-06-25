@@ -47,7 +47,7 @@ load_common_properties()
 # SRM clients (one per configured frontend)
 SRM_CLIENTS = init_srm_clients(get_storm_fe_endpoint_list())
 
-info("SRM clients: %s" % clients)
+info("SRM clients: %s" % SRM_CLIENTS)
 
 # Common variables:
 TEST_STORAGEAREA = get_test_storagearea()
