@@ -33,11 +33,9 @@ def get_test_num_files():
 def init_srm_clients(fe_list):
     clients = []
     frontends = [f.strip() for f in fe_list.split(',')]
-    debug("frontends: %s" % frontends)
     for f in frontends:
-        endpoint = "https://%s" % f
-        client = SRMClientFactory.newSRMClient(endpoint, get_proxy_file_path())
-        clients.append((endpoint,client))
+        client = SRMClientFactory.newSRMClient("https://%s" % f, get_proxy_file_path())
+        clients.append((f,client))
     return clients
 
 ## This loads the base properties inside grinder properties
@@ -45,8 +43,9 @@ def init_srm_clients(fe_list):
 load_common_properties()
 
 # SRM clients (one per configured frontend)
-SRM_CLIENTS = init_srm_clients(get_storm_fe_endpoint_list())
-
+FE_LIST = get_storm_fe_endpoint_list()
+info("Frontend list: %s" % FE_LIST)
+SRM_CLIENTS = init_srm_clients(FE_LIST)
 info("SRM clients: %s" % SRM_CLIENTS)
 
 # Common variables:
