@@ -1,6 +1,7 @@
 from java.util import Properties
 from java.io import FileInputStream, BufferedInputStream
 from net.grinder.script.Grinder import grinder
+from org.italiangrid.srm.client import SRMClientFactory
 from org.slf4j import Logger, LoggerFactory
 import os
 

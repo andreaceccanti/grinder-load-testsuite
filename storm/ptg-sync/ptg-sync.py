@@ -3,7 +3,6 @@ from exceptions import Exception
 from gov.lbl.srm.StorageResourceManager import TStatusCode
 from net.grinder.script import Test
 from net.grinder.script.Grinder import grinder
-from org.italiangrid.srm.client import SRMClientFactory
 import ptg,rmdir,sptg,sptp,mkdir,ptp,pd,rf
 import random
 import time
