@@ -30,23 +30,13 @@ def get_test_do_handshake():
 def get_test_num_files():
     return int(get_prop('TESTSUITE_TEST_NUM_FILES', props["ptg-sync.num_files"]))
 
-def init_srm_clients(fe_list):
-    clients = []
-    frontends = [f.strip() for f in fe_list.split(',')]
-    for f in frontends:
-        client = SRMClientFactory.newSRMClient("https://%s" % f, get_proxy_file_path())
-        clients.append((f,client))
-    return clients
-
 ## This loads the base properties inside grinder properties
 ## Should be left at the top of the script execution
 load_common_properties()
 
 # SRM clients (one per configured frontend)
-FE_LIST = get_storm_fe_endpoint_list()
-info("Frontend list: %s" % FE_LIST)
-SRM_CLIENTS = init_srm_clients(FE_LIST)
-info("SRM clients: %s" % SRM_CLIENTS)
+SRM_CLIENTS = get_srm_clients()
+debug("SRM clients: %s" % SRM_CLIENTS)
 
 # Common variables:
 TEST_STORAGEAREA = get_test_storagearea()
@@ -56,20 +46,20 @@ SRM_SUCCESS  = TStatusCode.SRM_SUCCESS
 
 # Start sleeping between sptg requests after this number
 SLEEP_THRESHOLD = get_test_sleep_threshold()
-info("SLEEP_THRESHOLD = %s" % SLEEP_THRESHOLD)
+debug("SLEEP_THRESHOLD = %s" % SLEEP_THRESHOLD)
 
 ## Sleep time (seconds)
 SLEEP_TIME = get_test_sleep_time()
-info("SLEEP_TIME = %s" % SLEEP_TIME)
+debug("SLEEP_TIME = %s" % SLEEP_TIME)
 
 ## Perform an srmPing before running the test to
 ## rule out the handshake time from the stats
 DO_HANDSHAKE = get_test_do_handshake()
-info("DO_HANDSHAKE = %s" % DO_HANDSHAKE)
+debug("DO_HANDSHAKE = %s" % DO_HANDSHAKE)
 
 ## Number of files created in the ptg directory
 NUM_FILES = get_test_num_files()
-info("NUM_FILES = %s" % NUM_FILES)
+debug("NUM_FILES = %s" % NUM_FILES)
 
 def get_client():
     return random.choice(SRM_CLIENTS)
@@ -92,7 +82,7 @@ def check_success(res, msg):
 
 def setup():
 
-    info("Setting up ptg-sync test.")
+    debug("Setting up ptg-sync test.")
 
     endpoint,client = get_client()
     debug("Client endpoint: %s" % endpoint)
@@ -103,11 +93,11 @@ def setup():
     res = mkdir_runner(test_dir_surl,client)
 
     base_dir_surl = "%s/%s" % (test_dir_surl, str(uuid.uuid4()))
-    info("Creating thread specific dir: " + base_dir_surl)
+    debug("Creating thread specific dir: " + base_dir_surl)
 
     res = mkdir_runner(base_dir_surl,client)
     check_success(res, "Error creating %s" % base_dir_surl)
-    info("Base directory succesfully created.")
+    debug("Base directory succesfully created.")
 
     surls = []
 
@@ -134,12 +124,12 @@ def setup():
     res = pd_runner(surls,res.requestToken,client)
 
     check_success(res, "Error in PD for surls: %s" % surls)
-    info("ptg-sync setup completed succesfully.")
+    debug("ptg-sync setup completed succesfully.")
 
     return base_dir_surl,surls
 
 def cleanup(base_dir):
-    info("Cleaning up for ptg-sync test.")
+    debug("Cleaning up for ptg-sync test.")
 
     endpoint, client = get_client()
 
@@ -148,7 +138,7 @@ def cleanup(base_dir):
 
     if status_code(res) != SRM_SUCCESS:
         raise Exception("srmRmdir failed for %s. %s %s" %(base_dir, status_code(res), explanation(res)))
-    info("ptg-sync cleanup completed succesfully.")
+    debug("ptg-sync cleanup completed succesfully.")
 
 def ptg_sync(base_dir_surl):
     endpoint, client = get_client()
@@ -190,7 +180,6 @@ class TestRunner:
                 get_client()[1].srmPing()
 
             (base_dir_surl, surls) = setup()
-            info("base_dir_surl = %s" % base_dir_surl)
             ptg_sync(base_dir_surl)
             cleanup(base_dir_surl)
 

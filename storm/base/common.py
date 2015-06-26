@@ -30,7 +30,16 @@ def get_storm_dav_endpoint_list():
     return get_prop('STORM_DAV_ENDPOINT_LIST', props["common.default.storm_dav_endpoint_list"])
 
 def get_test_storagearea():
-    return get_prop('TEST_STORAGEAREA', props["common.default.test_storagearea"])
+    return get_prop('TESTSUITE_STORAGE_AREA', props["common.default.test_storagearea"])
+
+def get_srm_clients():
+    fe_list = get_storm_fe_endpoint_list()
+    clients = []
+    frontends = [f.strip() for f in fe_list.split(',')]
+    for f in frontends:
+        client = SRMClientFactory.newSRMClient("https://%s" % f, get_proxy_file_path())
+        clients.append((f,client))
+    return clients
 
 def get_surl(endpoint, storagearea, path):
     return "srm://%s/%s/%s" % (endpoint, storagearea, path)
