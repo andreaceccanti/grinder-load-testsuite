@@ -2,48 +2,79 @@ from java.util import Properties
 from java.io import FileInputStream, BufferedInputStream
 from net.grinder.script.Grinder import grinder
 from org.italiangrid.srm.client import SRMClientFactory
+from org.italiangrid.dav.client import WebDAVClient, WebDAVClientFactory
 from org.slf4j import Logger, LoggerFactory
 import os
-
-PROPERTIES = "common.properties"
-
-props = grinder.properties
+import random
 
 def get_logger(name):
     return LoggerFactory.getLogger(name)
 
-def get_prop(name, default):
-    res = os.getenv(name)
-    if res is None:
-        return default
-    return res
+class Configuration:
+    
+    props = grinder.properties
 
-def get_proxy_file_path():
-    return get_prop('X509_USER_PROXY', "/tmp/x509up_u%s" % os.geteuid())
+    def get_prop(self, name, default):
+        res = os.getenv(name)
+        if res is None:
+            return default
+        return res
 
-def get_storm_be_hostname():
-    return get_prop('STORM_BE_HOSTNAME', props["common.default.storm_be_hostname"])
+    def get_proxy_file_path(self):
+        return self.get_prop('X509_USER_PROXY', "/tmp/x509up_u%s" % os.geteuid())
+    
+    def get_storm_be_hostname(self):
+        return self.get_prop('STORM_BE_HOSTNAME', self.props["common.default.storm_be_hostname"])
+    
+    def get_storm_fe_endpoint_list(self):
+        return self.get_prop('STORM_FE_ENDPOINT_LIST', self.props["common.default.storm_fe_endpoint_list"])
+    
+    def get_storm_dav_endpoint_list(self):
+        return self.get_prop('STORM_DAV_ENDPOINT_LIST', self.props["common.default.storm_dav_endpoint_list"])
+    
+    def get_test_storagearea(self):
+        return self.get_prop('TESTSUITE_STORAGE_AREA', self.props["common.default.test_storagearea"])
+    
+    def load_common_properties(self):
+        """Loads common test properties into grinder properties."""
+    
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        file_name = os.path.join(current_dir, "common.properties")
+        source = BufferedInputStream(FileInputStream(file_name))
+        self.props = Properties()
+        self.props.load(source)
+        source.close()
+    
+        for key in self.props.keySet().iterator():
+            grinder.properties[key] = self.props.get(key)
 
-def get_storm_fe_endpoint_list():
-    return get_prop('STORM_FE_ENDPOINT_LIST', props["common.default.storm_fe_endpoint_list"])
-
-def get_storm_dav_endpoint_list():
-    return get_prop('STORM_DAV_ENDPOINT_LIST', props["common.default.storm_dav_endpoint_list"])
-
-def get_test_storagearea():
-    return get_prop('TESTSUITE_STORAGE_AREA', props["common.default.test_storagearea"])
-
-def get_srm_clients():
-    fe_list = get_storm_fe_endpoint_list()
-    clients = []
-    frontends = [f.strip() for f in fe_list.split(',')]
-    for f in frontends:
-        client = SRMClientFactory.newSRMClient("https://%s" % f, get_proxy_file_path())
-        clients.append((f,client))
-    return clients
-
-def get_surl(endpoint, storagearea, path):
-    return "srm://%s/%s/%s" % (endpoint, storagearea, path)
+class Utils:
+    
+    def get_srm_clients(self, conf):
+        clients = []
+        frontends = [f.strip() for f in conf.get_storm_fe_endpoint_list().split(',')]
+        for f in frontends:
+            client = SRMClientFactory.newSRMClient("https://%s" % f, conf.get_proxy_file_path())
+            clients.append((f,client))
+        return clients
+    
+    def get_dav_clients(self, conf):
+        clients = []
+        webdavs = [dav.strip() for dav in conf.get_storm_dav_endpoint_list().split(',')]
+        for dav in webdavs:
+            client = WebDAVClientFactory.newWebDAVClient("https://%s" % dav, conf.get_proxy_file_path())
+            clients.append((dav,client))
+        return clients
+    
+    def get_SRM_client(self, conf):
+        return random.choice(self.get_srm_clients(conf))
+    
+    def get_DAV_client(self, conf):
+        return random.choice(self.get_dav_clients(conf))
+    
+    def get_surl(self, endpoint, storagearea, path):
+        return "srm://%s/%s/%s" % (endpoint, storagearea, path)
+    
 
 def log_surl_call_result(op_name, res, logger=None):
 
@@ -65,18 +96,7 @@ def log_surl_call_result(op_name, res, logger=None):
         logger("%s -> %s" %(surl,
                             s.getStatus().getStatusCode()))
 
-def load_common_properties():
-    """Loads common test properties into grinder properties."""
 
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    file_name = os.path.join(current_dir, PROPERTIES)
-    source = BufferedInputStream(FileInputStream(file_name))
-    props = Properties()
-    props.load(source)
-    source.close()
-
-    for key in props.keySet().iterator():
-        grinder.properties[key] = props.get(key)
 
 class TestID():
     PTG       = 1

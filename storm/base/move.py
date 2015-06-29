@@ -1,4 +1,4 @@
-from common import TestID, log_surl_call_result, load_common_properties
+from common import TestID
 from eu.emi.security.authn.x509.impl import PEMCredential
 from exceptions import Exception
 from jarray import array

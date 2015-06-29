@@ -1,4 +1,4 @@
-from common import TestID, load_common_properties, get_proxy_file_path
+from common import TestID, Configuration, Utils
 from eu.emi.security.authn.x509.impl import PEMCredential
 from exceptions import Exception
 from jarray import array
@@ -14,26 +14,25 @@ import uuid
 import os
 
 
-## This loads the base properties inside grinder properties
-## Should be left at the top of the script execution
-load_common_properties()
-
 error           = grinder.logger.error
 info            = grinder.logger.info
 debug           = grinder.logger.debug
 
 props           = grinder.properties
 
-# Proxy authorized to write on SRM/WEBDAV endpoints
-PROXY_FILE      = get_proxy_file_path()
+CONF            = Configuration()
+UTILS           = Utils()
 
-# Common variables:
-TEST_STORAGEAREA = props['common.test_storagearea']
+## This loads the base properties inside grinder properties
+## Should be left at the top of the script execution
+CONF.load_common_properties()
 
-## Endpoints
-WEBDAV_ENDPOINT = "https://%s:%s" % (props['common.gridhttps_host'],props['common.gridhttps_ssl_port'])
+# Get common variables:
+TEST_STORAGEAREA = CONF.get_test_storagearea()
 
 # Test specific variables
+DAV_ENDPOINT,DAV_CLIENT = UTILS.get_DAV_client(CONF)
+
 TEST_DIRECTORY  = props['mixdav.test_directory']
 
 def check_http_success(statusCode, expected_code, error_msg):
@@ -42,7 +41,7 @@ def check_http_success(statusCode, expected_code, error_msg):
         raise Exception(msg)
 
 def create_test_directory_if_needed(DAV_client):
-    test_dir_url = "%s/webdav/%s/%s" % (WEBDAV_ENDPOINT, TEST_STORAGEAREA, TEST_DIRECTORY)
+    test_dir_url = "https://%s/webdav/%s/%s" % (DAV_ENDPOINT, TEST_STORAGEAREA, TEST_DIRECTORY)
     http_get_runner=http_get.TestRunner()
     statusCode = http_get_runner(test_dir_url,DAV_client)
     if (statusCode != 200):
@@ -65,9 +64,9 @@ def mix_dav(DAV_client, local_file_path):
 
     target_dir_name   = str(uuid.uuid4());
     target_file_name  = str(uuid.uuid4());
-    target_dir_url    = "%s/webdav/%s/%s/%s" % (WEBDAV_ENDPOINT, TEST_STORAGEAREA, TEST_DIRECTORY, target_dir_name)
-    target_file_url   = "%s/webdav/%s/%s/%s/%s" % (WEBDAV_ENDPOINT, TEST_STORAGEAREA, TEST_DIRECTORY, target_dir_name, target_file_name)
-    target_file_url2   = "%s/webdav/%s/%s/%s/%s2" % (WEBDAV_ENDPOINT, TEST_STORAGEAREA, TEST_DIRECTORY, target_dir_name, target_file_name)
+    target_dir_url    = "https://%s/webdav/%s/%s/%s" % (DAV_ENDPOINT, TEST_STORAGEAREA, TEST_DIRECTORY, target_dir_name)
+    target_file_url   = "https://%s/webdav/%s/%s/%s/%s" % (DAV_ENDPOINT, TEST_STORAGEAREA, TEST_DIRECTORY, target_dir_name, target_file_name)
+    target_file_url2   = "https://%s/webdav/%s/%s/%s/%s2" % (DAV_ENDPOINT, TEST_STORAGEAREA, TEST_DIRECTORY, target_dir_name, target_file_name)
 
     mkcol_runner = mkcol.TestRunner()
     mkcol_runner(target_dir_url,DAV_client)
@@ -98,7 +97,7 @@ def mix_dav(DAV_client, local_file_path):
 class TestRunner:
 
     def __init__(self):
-        self.HTTP_Client = WebDAVClientFactory.newWebDAVClient(WEBDAV_ENDPOINT,PROXY_FILE)
+        self.HTTP_Client = DAV_CLIENT
         create_test_directory_if_needed(self.HTTP_Client)
         self.local_file_path = setup(self.HTTP_Client)
 

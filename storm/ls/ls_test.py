@@ -1,4 +1,4 @@
-from common import TestID, load_common_properties, get_proxy_file_path
+from common import TestID, Configuration, Utils
 from eu.emi.security.authn.x509.impl import PEMCredential
 from exceptions import Exception
 from gov.lbl.srm.StorageResourceManager import TStatusCode
@@ -18,26 +18,23 @@ import os
 
 # Test: create width x height elements, save surls and ls one element random each run
 
-
-## This loads the base properties inside grinder properties
-## Should be left at the top of the script execution
-load_common_properties()
-
 error          = grinder.logger.error
 info           = grinder.logger.info
 debug          = grinder.logger.debug
 
 props          = grinder.properties
 
-# Proxy authorized to write on SRM/WEBDAV endpoints
-PROXY_FILE      = get_proxy_file_path()
+CONF           = Configuration()
+UTILS          = Utils()
+
+## This loads the base properties inside grinder properties
+## Should be left at the top of the script execution
+CONF.load_common_properties()
 
 # Get common variables:
-TEST_STORAGEAREA = props['common.test_storagearea']
+TEST_STORAGEAREA = CONF.get_test_storagearea()
 
-## Endpoints
-FRONTEND_ENDPOINT = "https://%s:%s" % (props['common.frontend_host'],props['common.frontend_port'])
-SRM_ENDPOINT    = "srm://%s:%s" % (props['common.frontend_host'],props['common.frontend_port'])
+SRM_ENDPOINT,SRM_CLIENT = UTILS.get_SRM_client(CONF)
 
 # Test specific variables
 TEST_DIRECTORY  = props['ls.test_directory']
@@ -53,9 +50,7 @@ FILE_PREFIX  = "file"
 SRM_SUCCESS     = TStatusCode.SRM_SUCCESS
 WAITING_STATES  = [TStatusCode.SRM_REQUEST_QUEUED, TStatusCode.SRM_REQUEST_INPROGRESS]
 
-SRM_CLIENT      = SRMClientFactory.newSRMClient(FRONTEND_ENDPOINT,PROXY_FILE)
-
-TEST_DIRECTORY_SURL = "%s/%s/%s" % (SRM_ENDPOINT, TEST_STORAGEAREA, TEST_DIRECTORY)
+TEST_DIRECTORY_SURL = UTILS.get_surl(SRM_ENDPOINT, TEST_STORAGEAREA, TEST_DIRECTORY)
 
 def getDirectoriesSURLs():
     surls = []
