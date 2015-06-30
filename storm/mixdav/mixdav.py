@@ -20,32 +20,36 @@ debug           = grinder.logger.debug
 
 props           = grinder.properties
 
-CONF            = Configuration()
-UTILS           = Utils()
+conf            = Configuration()
+utils           = Utils()
 
 ## This loads the base properties inside grinder properties
 ## Should be left at the top of the script execution
-CONF.load_common_properties()
+conf.load_common_properties()
 
 # Get common variables:
-TEST_STORAGEAREA = CONF.get_test_storagearea()
+TEST_STORAGEAREA = conf.get_test_storagearea()
 
 # Test specific variables
-DAV_ENDPOINT,DAV_CLIENT = UTILS.get_DAV_client(CONF)
+DAV_CLIENTS = utils.get_dav_clients(conf)
 
 TEST_DIRECTORY  = props['mixdav.test_directory']
+
+def get_client():
+    return random.choice(DAV_CLIENTS)
 
 def check_http_success(statusCode, expected_code, error_msg):
     if (statusCode != expected_code):
         msg = "%s. Status code is %s instead of %s" % (error_msg, statusCode, expected_code)
         raise Exception(msg)
 
-def create_test_directory_if_needed(DAV_client):
-    test_dir_url = "https://%s/webdav/%s/%s" % (DAV_ENDPOINT, TEST_STORAGEAREA, TEST_DIRECTORY)
+def create_test_directory_if_needed():
+    endpoint,client = get_client()
+    test_dir_url = "https://%s/webdav/%s/%s" % (endpoint, TEST_STORAGEAREA, TEST_DIRECTORY)
     http_get_runner=http_get.TestRunner()
-    statusCode = http_get_runner(test_dir_url,DAV_client)
+    statusCode = http_get_runner(test_dir_url, client)
     if (statusCode != 200):
-        DAV_client.mkcol(test_dir_url)
+        client.mkcol(test_dir_url)
 
 def create_local_file_to_upload():
     local_file_path = "/tmp/%s" % str(uuid.uuid4());
@@ -54,14 +58,16 @@ def create_local_file_to_upload():
     file.close()
     return local_file_path
 
-def setup(DAV_client):
+def setup():
     info("Setting up Mix-WebDAV test.")
     local_file_path = create_local_file_to_upload()
     info("Mix-WebDAV test setup completed.")
     return local_file_path
 
-def mix_dav(DAV_client, local_file_path):
+def mix_dav(local_file_path):
 
+    DAV_ENDPOINT,DAV_client = get_client()
+    
     target_dir_name   = str(uuid.uuid4());
     target_file_name  = str(uuid.uuid4());
     target_dir_url    = "https://%s/webdav/%s/%s/%s" % (DAV_ENDPOINT, TEST_STORAGEAREA, TEST_DIRECTORY, target_dir_name)
@@ -97,15 +103,14 @@ def mix_dav(DAV_client, local_file_path):
 class TestRunner:
 
     def __init__(self):
-        self.HTTP_Client = DAV_CLIENT
-        create_test_directory_if_needed(self.HTTP_Client)
-        self.local_file_path = setup(self.HTTP_Client)
+        create_test_directory_if_needed()
+        self.local_file_path = setup()
 
     def __call__(self):
         try:
             test = Test(TestID.MIX_DAV, "StoRM Mix WebDAV test")
             test.record(mix_dav)
-            mix_dav(self.HTTP_Client, self.local_file_path)
+            mix_dav(self.local_file_path)
 
         except Exception, e:
             error("Error executing mix-dav: %s" % traceback.format_exc())

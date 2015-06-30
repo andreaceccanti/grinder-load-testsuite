@@ -66,12 +66,6 @@ class Utils:
             clients.append((dav,client))
         return clients
     
-    def get_SRM_client(self, conf):
-        return random.choice(self.get_srm_clients(conf))
-    
-    def get_DAV_client(self, conf):
-        return random.choice(self.get_dav_clients(conf))
-    
     def get_surl(self, endpoint, storagearea, path):
         return "srm://%s/%s/%s" % (endpoint, storagearea, path)
     
