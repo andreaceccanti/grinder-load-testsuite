@@ -25,7 +25,7 @@ utils           = Utils()
 
 ## This loads the base properties inside grinder properties
 ## Should be left at the top of the script execution
-conf.load_common_properties()
+# conf.load_common_properties()
 
 # Get common variables:
 TEST_STORAGEAREA = conf.get_test_storagearea()
