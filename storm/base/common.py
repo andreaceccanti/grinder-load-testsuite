@@ -18,42 +18,24 @@ class Configuration:
     
     props = grinder.properties
 
-    def get_prop(self, name, default):
-        info("get_prop: name = %s" % name)
-        res = os.getenv(name)
-        info("get_prop: res = %s" % res)
-        if res is None:
-            return default
-        return res
-
     def get_proxy_file_path(self):
-        return self.get_prop('X509_USER_PROXY', "/tmp/x509up_u%s" % os.geteuid())
+        return os.getenv('X509_USER_PROXY', "/tmp/x509up_u%s" % os.geteuid())
     
     def get_storm_be_hostname(self):
-        return self.get_prop('STORM_BE_HOSTNAME', self.props["common.default.storm_be_hostname"])
+        return os.getenv('STORM_BE_HOSTNAME', self.props["common.storm_be_hostname"])
     
     def get_storm_fe_endpoint_list(self):
-        return self.get_prop('STORM_FE_ENDPOINT_LIST', self.props["common.default.storm_fe_endpoint_list"])
+        return os.getenv('STORM_FE_ENDPOINT_LIST', self.props["common.storm_fe_endpoint_list"])
     
     def get_storm_dav_endpoint_list(self):
-        return self.get_prop('STORM_DAV_ENDPOINT_LIST', self.props["common.default.storm_dav_endpoint_list"])
+        return os.getenv('STORM_DAV_ENDPOINT_LIST', self.props["common.storm_dav_endpoint_list"])
     
     def get_test_storagearea(self):
-        return self.get_prop('TESTSUITE_STORAGE_AREA', self.props["common.default.test_storagearea"])
-    
-    def load_common_properties(self):
-        """Loads common test properties into grinder properties."""
-    
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        file_name = os.path.join(current_dir, "common.properties")
-        source = BufferedInputStream(FileInputStream(file_name))
-        self.props = Properties()
-        self.props.load(source)
-        source.close()
-    
-        for key in self.props.keySet().iterator():
-            grinder.properties[key] = self.props.get(key)
+        return os.getenv('TESTSUITE_STORAGE_AREA', self.props["common.test_storagearea"])
 
+    def get_prop(self, name):
+        return self.props[name]   
+ 
 class Utils:
     
     def get_srm_clients(self, conf):
