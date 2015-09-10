@@ -19,8 +19,9 @@ class Configuration:
     props = grinder.properties
 
     def get_prop(self, name, default):
+        info("get_prop: name = %s" % name)
         res = os.getenv(name)
-        
+        info("get_prop: res = %s" % res)
         if res is None:
             return default
         return res
