@@ -67,6 +67,8 @@ def setup():
 def mix_dav(local_file_path):
 
     DAV_ENDPOINT,DAV_client = get_client()
+
+    info("DAV_ENDPOINT = %s" % DAV_ENDPOINT)
     
     target_dir_name   = str(uuid.uuid4());
     target_file_name  = str(uuid.uuid4());

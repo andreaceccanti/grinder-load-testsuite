@@ -7,6 +7,10 @@ from org.slf4j import Logger, LoggerFactory
 import os
 import random
 
+error           = grinder.logger.error
+info            = grinder.logger.info
+debug           = grinder.logger.debug
+
 def get_logger(name):
     return LoggerFactory.getLogger(name)
 
@@ -16,6 +20,7 @@ class Configuration:
 
     def get_prop(self, name, default):
         res = os.getenv(name)
+        
         if res is None:
             return default
         return res
@@ -62,6 +67,7 @@ class Utils:
         clients = []
         webdavs = [dav.strip() for dav in conf.get_storm_dav_endpoint_list().split(',')]
         for dav in webdavs:
+            info("get_dav_clients: creating client on %s" % dav)
             client = WebDAVClientFactory.newWebDAVClient("https://%s" % dav, conf.get_proxy_file_path())
             clients.append((dav,client))
         return clients
