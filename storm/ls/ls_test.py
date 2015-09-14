@@ -27,13 +27,8 @@ props          = grinder.properties
 conf           = Configuration()
 utils          = Utils()
 
-## This loads the base properties inside grinder properties
-## Should be left at the top of the script execution
-conf.load_common_properties()
-
-SRM_CLIENTS = utils.get_srm_clients(conf)
-
 # Get common variables:
+SRM_CLIENTS = utils.get_srm_clients(conf)
 TEST_STORAGEAREA = conf.get_test_storagearea()
 
 # Test specific variables
