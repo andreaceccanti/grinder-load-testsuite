@@ -57,9 +57,25 @@ def check_success(res, msg):
         raise Exception(error_msg)
 
 def create_directory(client, surl):
+    
     mkdir_runner = mkdir.TestRunner()
     res = mkdir_runner(surl, client)
     debug("mkdir returned status: %s (expl: %s)" % (status_code(res), explanation(res)))
+    return res
+
+def remove_directory(client, surl):
+    
+    rmdir_runner = rmdir.TestRunner()
+    res = rmdir_runner(surl, client)
+    debug("rmdir returned status: %s (expl: %s)" % (status_code(res), explanation(res)))
+    return res
+
+def list_directory(client, surl):
+    
+    ls_runner = ls.TestRunner()
+    res = ls_runner(surl, client)
+    debug("ls returned status: %s (expl: %s)" % (status_code(res), explanation(res)))
+    return res
 
 def setup():
 
@@ -76,17 +92,12 @@ def mkrmdir():
     dir_name = str(uuid.uuid4());
     surl = "%s/%s" % (TEST_DIRECTORY_SURL, dir_name)
 
-    mkdir_runner = mkdir.TestRunner()
-    mkdir_res = mkdir_runner(surl, client)
-    check_success(mkdir_res, "MkDir failure on surl: %s" % surl)
-
-    ls_runner = ls.TestRunner()
-    ls_res = ls_runner(surl, client)
-    check_success(ls_res, "Ls failure on surl: %s" % surl)
-
-    rmdir_runner = rmdir.TestRunner()
-    rmdir_res = rmdir_runner(surl, client)
-    check_success(rmdir_res, "RmDir failure on surl: %s" % surl)
+    res = create_directory(client, surl)
+    check_success(res, "MkDir failure on surl: %s" % surl)
+    res = list_directory(client, surl)
+    check_success(res, "Ls failure on surl: %s" % surl)
+    res = remove_directory(client, surl)
+    check_success(res, "RmDir failure on surl: %s" % surl)
 
     debug("Make/Remove directory finished")
 
