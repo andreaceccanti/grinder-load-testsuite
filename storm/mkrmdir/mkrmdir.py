@@ -1,4 +1,4 @@
-from common import TestID, Configuration, Utils
+from common import *
 from eu.emi.security.authn.x509.impl import PEMCredential
 from exceptions import Exception
 from gov.lbl.srm.StorageResourceManager import TStatusCode
@@ -8,7 +8,7 @@ from javax.net.ssl import X509ExtendedKeyManager
 from net.grinder.script import Test
 from net.grinder.script.Grinder import grinder
 from org.italiangrid.srm.client import SRMClient, SRMClientFactory
-import mkdir, rmdir, ls
+import mkdir, rmdir
 import random
 import string
 import time
@@ -22,12 +22,7 @@ debug          = grinder.logger.debug
 
 props          = grinder.properties
 
-conf           = Configuration()
-utils          = Utils()
-
-# Get common variables:
-SRM_CLIENTS = utils.get_srm_clients(conf)
-TEST_STORAGEAREA = conf.get_test_storagearea()
+utils          = Utils(grinder.properties)
 
 # Get common variables:
 TEST_STORAGEAREA = props['common.test_storagearea']
@@ -38,9 +33,9 @@ TEST_DIRECTORY  = props['mkrmdir.test_directory']
 SRM_SUCCESS     = TStatusCode.SRM_SUCCESS
 
 def get_client():
-    return random.choice(SRM_CLIENTS)
+    return utils.get_srm_client()
 
-TEST_DIRECTORY_SURL = utils.get_surl(get_client()[0], TEST_STORAGEAREA, TEST_DIRECTORY)
+TEST_DIRECTORY_SURL = get_surl(get_client()[0], TEST_STORAGEAREA, TEST_DIRECTORY)
 
 def status_code(resp):
 
@@ -70,13 +65,6 @@ def remove_directory(client, surl):
     debug("rmdir returned status: %s (expl: %s)" % (status_code(res), explanation(res)))
     return res
 
-def list_directory(client, surl):
-    
-    ls_runner = ls.TestRunner()
-    res = ls_runner(surl, client)
-    debug("ls returned status: %s (expl: %s)" % (status_code(res), explanation(res)))
-    return res
-
 def setup():
 
     info("Setting up mkrmdir test.")
@@ -94,8 +82,6 @@ def mkrmdir():
 
     res = create_directory(client, surl)
     check_success(res, "MkDir failure on surl: %s" % surl)
-    res = list_directory(client, surl)
-    check_success(res, "Ls failure on surl: %s" % surl)
     res = remove_directory(client, surl)
     check_success(res, "RmDir failure on surl: %s" % surl)
 

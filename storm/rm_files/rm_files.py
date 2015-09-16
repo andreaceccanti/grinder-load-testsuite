@@ -1,10 +1,10 @@
-from common import TestID, Configuration, Utils
+from common import *
 from jarray import array
 from net.grinder.script import Test
 from net.grinder.script.Grinder import grinder
 from gov.lbl.srm.StorageResourceManager import TStatusCode
 from org.italiangrid.srm.client import SRMClient, SRMClientFactory
-import mkdir, ptp, sptp, pd
+import mkdir, ptp, sptp, pd, rm
 import traceback
 import time
 import random
@@ -16,12 +16,10 @@ debug           = grinder.logger.debug
 
 props           = grinder.properties
 
-conf           = Configuration()
-utils          = Utils()
+utils           = Utils(grinder.properties)
 
 # Get common variables:
-SRM_CLIENTS = utils.get_srm_clients(conf)
-TEST_STORAGEAREA = conf.get_test_storagearea()
+TEST_STORAGEAREA = props['common.test_storagearea']
 
 # Test specific variables
 TEST_DIRECTORY  = props['rm.test_directory']
@@ -32,9 +30,9 @@ WAITING_STATES  = [TStatusCode.SRM_REQUEST_QUEUED, TStatusCode.SRM_REQUEST_INPRO
 SRM_SUCCESS     = TStatusCode.SRM_SUCCESS
 
 def get_client():
-    return random.choice(SRM_CLIENTS)
+    return utils.get_srm_client()
 
-TEST_DIRECTORY_SURL = utils.get_surl(get_client()[0], TEST_STORAGEAREA, TEST_DIRECTORY)
+TEST_DIRECTORY_SURL = get_surl(get_client()[0], TEST_STORAGEAREA, TEST_DIRECTORY)
 
 def initSURLs(num_files):
     surls = []

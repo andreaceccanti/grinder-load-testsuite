@@ -1,20 +1,13 @@
-from common import TestID, Configuration, Utils
-from eu.emi.security.authn.x509.impl import PEMCredential
+from common import *
 from exceptions import Exception
 from gov.lbl.srm.StorageResourceManager import TStatusCode
 from jarray import array
-from java.io import FileInputStream
-from javax.net.ssl import X509ExtendedKeyManager
 from net.grinder.script import Test
 from net.grinder.script.Grinder import grinder
-from org.italiangrid.srm.client import SRMClient, SRMClientFactory
 import mkdir, ptp, sptp, pd, ls, rmdir
 import random
-import string
 import time
 import traceback
-import uuid
-import os
 
 # Test: create width x height elements, save surls and ls one element random each run
 
@@ -24,12 +17,10 @@ debug          = grinder.logger.debug
 
 props          = grinder.properties
 
-conf           = Configuration()
-utils          = Utils()
+utils          = Utils(grinder.properties)
 
 # Get common variables:
-SRM_CLIENTS = utils.get_srm_clients(conf)
-TEST_STORAGEAREA = conf.get_test_storagearea()
+TEST_STORAGEAREA = props['common.test_storagearea']
 
 # Test specific variables
 TEST_DIRECTORY  = props['ls.test_directory']
@@ -46,11 +37,12 @@ SRM_SUCCESS     = TStatusCode.SRM_SUCCESS
 WAITING_STATES  = [TStatusCode.SRM_REQUEST_QUEUED, TStatusCode.SRM_REQUEST_INPROGRESS]
 
 def get_client():
-    return random.choice(SRM_CLIENTS)
+    return utils.get_srm_client()
 
-TEST_DIRECTORY_SURL = utils.get_surl(get_client()[0], TEST_STORAGEAREA, TEST_DIRECTORY)
+TEST_DIRECTORY_SURL = get_surl(get_client()[0], TEST_STORAGEAREA, TEST_DIRECTORY)
 
 def initSURLs():
+    
     surls = []
     current = TEST_DIRECTORY_SURL
     for i in range(1, TEST_DIR_HEIGHT + 1):
@@ -63,22 +55,27 @@ def initSURLs():
 SURLS = initSURLs()
 
 def status_code(resp):
+    
     return resp.returnStatus.statusCode
 
 def explanation(resp):
+    
     return resp.returnStatus.explanation
 
 def check_success(res, msg):
+    
     if status_code(res) != SRM_SUCCESS:
         error_msg = "%s. %s (expl: %s)" % (msg, status_code(res), explanation(res))
         raise Exception(error_msg)
 
 def create_directory(client, surl):
+    
     mkdir_runner = mkdir.TestRunner()
     res = mkdir_runner(surl, client)
     debug("mkdir returned status: %s (expl: %s)" % (status_code(res), explanation(res)))
 
 def upload_file(client, surl):
+    
     debug("Upload file %s" % surl)
     # create runners
     ptp_runner = ptp.TestRunner()
@@ -100,6 +97,7 @@ def upload_file(client, surl):
     debug("File %s successfully uploaded." % surl)
 
 def generateTree(client):
+    
     info("Creating test directories and files")
     for dsurl in SURLS:
         create_directory(client, dsurl)
@@ -108,28 +106,34 @@ def generateTree(client):
             upload_file(client, fsurl)
 
 def setup():
+    
     info("Setting up ls test.")
     client = get_client()[1]
     create_directory(client, TEST_DIRECTORY_SURL)
     generateTree(client)
     info("ls setup completed successfully.")
 
-def cleanup():
+def cleanup(exit_with_success):
+    
     info("Cleaning up ls test main dir: %s" % SURLS[0])
     rmdir_runner = rmdir.TestRunner()
     res = rmdir_runner(SURLS[0], get_client()[1], 1)
-    check_success(res, "Error in rmDir for surl: %s" % SURLS[0])
+    if exit_with_success:
+        check_success(res, "Error in rmDir for surl: %s" % SURLS[0])
     info("ls cleanup completed successfully.")
 
 def ls_test(surl):
+    
     ls_runner = ls.TestRunner()
-    ls_res = ls_runner(surl, get_client()[1])
+    client = get_client()[1]
+    ls_res = ls_runner(surl, client)
     check_success(ls_res, "Ls failure on surl: %s" % surl)
 
 
 class TestRunner:
 
     def __init__(self):
+        
         self.SetupCompleteBarrier = grinder.barrier("Init barrier")
         self.ReadyToCleanUpBarrier = grinder.barrier("Cleanup barrier")
         self.numruns = int(props["grinder.runs"])
@@ -138,7 +142,7 @@ class TestRunner:
         
         if ((DO_SETUP == "yes") and (self.isFirstRun())):
             if (self.isTheInitializer()):
-                cleanup()
+                cleanup(False)
                 setup()
             debug("waiting all the other threads")
             self.SetupCompleteBarrier.await()
@@ -159,15 +163,18 @@ class TestRunner:
             self.ReadyToCleanUpBarrier.await()
             debug("ok, ready to cleanup!")
             if (self.isTheInitializer()):
-                 cleanup()
+                 cleanup(True)
 
     def isFirstRun(self):
+        
         return grinder.getRunNumber() == 0
 
     def isLastRun(self):
+        
         return grinder.getRunNumber() == (self.numruns - 1)
 
     def getId(self):
+        
         agent = grinder.getAgentNumber()
         process = grinder.getProcessNumber()
         thread = grinder.getThreadNumber()
@@ -177,6 +184,7 @@ class TestRunner:
         return agent + process + thread
 
     def isTheInitializer(self):
+        
         id = self.getId()
         debug("My id is %s" % id)
         return id == 0

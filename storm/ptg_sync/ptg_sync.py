@@ -1,4 +1,4 @@
-from common import Configuration, Utils, TestID
+from common import *
 from exceptions import Exception
 from gov.lbl.srm.StorageResourceManager import TStatusCode
 from net.grinder.script import Test
@@ -14,13 +14,11 @@ info           = grinder.logger.info
 debug          = grinder.logger.debug
 props          = grinder.properties
 
-conf           = Configuration()
-utils          = Utils()
+utils          = Utils(grinder.properties)
 
 
 # Common variables:
-SRM_CLIENTS = utils.get_srm_clients(conf)
-TEST_STORAGEAREA = conf.get_test_storagearea()
+TEST_STORAGEAREA = props['common.test_storagearea']
 
 # Local variables:
 WAITING_STATES = [TStatusCode.SRM_REQUEST_QUEUED, TStatusCode.SRM_REQUEST_INPROGRESS]
@@ -52,7 +50,7 @@ def check_success(res, msg):
         raise Exception(error_msg)
 
 def get_client():
-    return random.choice(SRM_CLIENTS)
+    return utils.get_srm_client()
 
 def setup():
     
@@ -65,7 +63,7 @@ def setup():
 
     endpoint, client = get_client()
 
-    test_dir_surl = utils.get_surl(endpoint, TEST_STORAGEAREA, TEST_DIRECTORY)
+    test_dir_surl = get_surl(endpoint, TEST_STORAGEAREA, TEST_DIRECTORY)
     debug("Creating test directory if it doesn't exist: " + test_dir_surl)
     mkdir_runner(test_dir_surl,client)
 
