@@ -1,4 +1,4 @@
-from common import TestID, load_common_properties, get_proxy_file_path
+from common import *
 from eu.emi.security.authn.x509.impl import PEMCredential
 from exceptions import Exception
 from gov.lbl.srm.StorageResourceManager import TStatusCode
@@ -8,7 +8,7 @@ from javax.net.ssl import X509ExtendedKeyManager
 from net.grinder.script import Test
 from net.grinder.script.Grinder import grinder
 from org.italiangrid.srm.client import SRMClient, SRMClientFactory
-import mkdir, rmdir, ls
+import mkdir, rmdir
 import random
 import string
 import time
@@ -16,34 +16,26 @@ import traceback
 import uuid
 import os
 
-
-## This loads the base properties inside grinder properties
-## Should be left at the top of the script execution
-load_common_properties()
-
 error          = grinder.logger.error
 info           = grinder.logger.info
 debug          = grinder.logger.debug
 
 props          = grinder.properties
 
-# Proxy authorized to write on SRM/WEBDAV endpoints
-PROXY_FILE      = get_proxy_file_path()
+utils          = Utils(grinder.properties)
 
 # Get common variables:
 TEST_STORAGEAREA = props['common.test_storagearea']
-
-## Endpoints
-FRONTEND_ENDPOINT = "https://%s:%s" % (props['common.frontend_host'],props['common.frontend_port'])
-SRM_ENDPOINT    = "srm://%s:%s" % (props['common.frontend_host'],props['common.frontend_port'])
 
 # Test specific variables
 TEST_DIRECTORY  = props['mkrmdir.test_directory']
 
 SRM_SUCCESS     = TStatusCode.SRM_SUCCESS
 
-SRM_CLIENT      = SRMClientFactory.newSRMClient(FRONTEND_ENDPOINT,PROXY_FILE)
+def get_client():
+    return utils.get_srm_client()
 
+TEST_DIRECTORY_SURL = get_surl(get_client()[0], TEST_STORAGEAREA, TEST_DIRECTORY)
 
 def status_code(resp):
 
@@ -59,33 +51,41 @@ def check_success(res, msg):
         error_msg = "%s. %s (expl: %s)" % (msg, status_code(res), explanation(res))
         raise Exception(error_msg)
 
-def create_test_directory_if_needed(SRM_client):
+def create_directory(client, surl):
+    
+    mkdir_runner = mkdir.TestRunner()
+    res = mkdir_runner(surl, client)
+    debug("mkdir returned status: %s (expl: %s)" % (status_code(res), explanation(res)))
+    return res
 
-    test_dir_surl = "%s/%s/%s" % (SRM_ENDPOINT, TEST_STORAGEAREA, TEST_DIRECTORY)
-    SRM_client.srmMkdir(test_dir_surl)
+def remove_directory(client, surl):
+    
+    rmdir_runner = rmdir.TestRunner()
+    res = rmdir_runner(surl, client)
+    debug("rmdir returned status: %s (expl: %s)" % (status_code(res), explanation(res)))
+    return res
 
-def setup(SRM_client):
+def setup():
 
     info("Setting up mkrmdir test.")
-    create_test_directory_if_needed(SRM_client)
+    client = get_client()[1] 
+    create_directory(client, TEST_DIRECTORY_SURL)
     info("mkrmdir setup completed successfully.")
 
-def mkrmdir(client):
+def mkrmdir():
 
+    debug("Make/Remove directory started")
+
+    client = get_client()[1]
     dir_name = str(uuid.uuid4());
-    surl = "%s/%s/%s/%s" % (SRM_ENDPOINT, TEST_STORAGEAREA, TEST_DIRECTORY, dir_name)
+    surl = "%s/%s" % (TEST_DIRECTORY_SURL, dir_name)
 
-    mkdir_runner = mkdir.TestRunner()
-    mkdir_res = mkdir_runner(surl, client)
-    check_success(mkdir_res, "MkDir failure on surl: %s" % surl)
+    res = create_directory(client, surl)
+    check_success(res, "MkDir failure on surl: %s" % surl)
+    res = remove_directory(client, surl)
+    check_success(res, "RmDir failure on surl: %s" % surl)
 
-    ls_runner = ls.TestRunner()
-    ls_res = ls_runner(surl, client)
-    check_success(ls_res, "Ls failure on surl: %s" % surl)
-
-    rmdir_runner = rmdir.TestRunner()
-    rmdir_res = rmdir_runner(surl, client)
-    check_success(rmdir_res, "RmDir failure on surl: %s" % surl)
+    debug("Make/Remove directory finished")
 
 
 class TestRunner:
@@ -96,8 +96,8 @@ class TestRunner:
             test = Test(TestID.MKRMDIR, "StoRM MkDir+RmDir")
             test.record(mkrmdir)
 
-            setup(SRM_CLIENT)
-            mkrmdir(SRM_CLIENT)
+            setup()
+            mkrmdir()
 
         except Exception, e:
             error("Error executing mkdir-rmdir: %s" % traceback.format_exc())
