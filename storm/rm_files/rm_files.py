@@ -24,7 +24,6 @@ TEST_STORAGEAREA = props['common.test_storagearea']
 # Test specific variables
 TEST_DIRECTORY  = props['rm.test_directory']
 TEST_NUMFILES   = int(props['rm.test_number_of_files'])
-MAX_WAITING_TIME_IN_MSEC = int(props['rm.max_waiting_time_in_msec'])
 
 WAITING_STATES  = [TStatusCode.SRM_REQUEST_QUEUED, TStatusCode.SRM_REQUEST_INPROGRESS]
 SRM_SUCCESS     = TStatusCode.SRM_SUCCESS
