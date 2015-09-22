@@ -6,8 +6,6 @@ from java.io import FileInputStream
 from net.grinder.plugin.http import HTTPRequest
 from net.grinder.script import Test
 from net.grinder.script.Grinder import grinder
-from org.italiangrid.srm.client import SRMClient, SRMClientFactory
-from org.italiangrid.dav.client import WebDAVClient, WebDAVClientFactory
 import ptg, sptg, rf, ptp, sptp, pd, rm, http_get, mkdir
 import string
 import time
