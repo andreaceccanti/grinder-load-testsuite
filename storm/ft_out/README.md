@@ -23,19 +23,20 @@ ls /tmp/x509up_u$(id -u)
 This test needs to know the srm endpoint:
 
 ```properties
-common.frontend_host = 
-common.frontend_port = 8444
+common.storm_fe_endpoint_list = omii006-vm03.cnaf.infn.it:8444
 ```
 
 and the file-transfer service endpoint:
 
 ```properties
-common.gridhttps_host = 
-common.gridhttps_ssl_port = 8443
+common.storm_dav_endpoint_list = omii006-vm03.cnaf.infn.it:8443
 ```
 
-Edit the `storm/base/common.properties` file and set 
-these properties as you need.
+and the target storage area:
+
+```properties
+common.test_storagearea = test.vo
+```
 
 ## Run the grinder console
 
