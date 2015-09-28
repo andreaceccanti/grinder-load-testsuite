@@ -1,39 +1,29 @@
-from common import TestID, log_surl_call_result
-from eu.emi.security.authn.x509.impl import PEMCredential
+from common import TestID
 from exceptions import Exception
-from jarray import array
-from java.io import FileInputStream
-from javax.net.ssl import X509ExtendedKeyManager
-from net.grinder.plugin.http import HTTPRequest
 from net.grinder.script import Test
 from net.grinder.script.Grinder import grinder
-from org.italiangrid.srm.client import SRMClient, SRMClientFactory
-import random
 import traceback
 
 error = grinder.logger.error
-info = grinder.logger.info
 debug = grinder.logger.debug
 
-props = grinder.properties
-
 def pd(surls, token, client):
-    debug("Requesting surl(s): %s" % surls)
 
-    res = client.srmPd(surls,
-                       token)
-
-    log_surl_call_result("pd", res)
-    debug("pd done.")
-    return res
+    debug("srmPutDone %s ... " % surls)
+    response = client.srmPd(surls, token)
+    debug("srmPutDone %s response is %s %s" % (surls, response.returnStatus.statusCode, response.returnStatus.explanation))
+    return response
 
 class TestRunner:
+
     def __call__(self, surls, token, client):
+        
         if client is None:
             raise Exception("Please set a non-null SRM client!")
 
         test = Test(TestID.PD, "StoRM PD")
         test.record(pd)
+
         try:
             return pd(surls, token, client)
         except Exception:

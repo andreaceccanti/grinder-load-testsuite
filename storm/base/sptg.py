@@ -1,35 +1,25 @@
-from common import TestID, log_surl_call_result
-from eu.emi.security.authn.x509.impl import PEMCredential
+from common import TestID
 from exceptions import Exception
-from gov.lbl.srm.StorageResourceManager import TStatusCode
-from jarray import array
-from java.io import FileInputStream
-from javax.net.ssl import X509ExtendedKeyManager
-from net.grinder.plugin.http import HTTPRequest
 from net.grinder.script import Test
 from net.grinder.script.Grinder import grinder
-from org.italiangrid.srm.client import SRMClient, SRMClientFactory
-import random
-import time
 import traceback
 
 error = grinder.logger.error
-info = grinder.logger.info
 debug = grinder.logger.debug
 
-props = grinder.properties
-
-def sptg(ptg_resp, client):
-    token = ptg_resp.requestToken
-    debug("SPTG for token: %s" % token )
-
-    res = client.srmSPtG(ptg_resp)
-    log_surl_call_result("sptg",res)
-    return res
+def sptg(ptg_response, client):
+    
+    token = ptg_response.requestToken
+    debug("srmStatusPrepareToGet token %s ... " % token )
+    response = client.srmSPtG(ptg_response)
+    debug("srmStatusPrepareToGet %s response is %s %s" % (token, response.returnStatus.statusCode, response.returnStatus.explanation))
+    return response
 
 class TestRunner:
-    def __call__(self, ptg_resp, client = None):
-        if ptg_resp is None:
+    
+    def __call__(self, ptg_response, client=None):
+        
+        if ptg_response is None:
             raise Exception("Please set a non-null PtG response!")
 
         if client is None:
@@ -39,7 +29,7 @@ class TestRunner:
         test.record(sptg)
 
         try:
-            return sptg(ptg_resp, client)
+            return sptg(ptg_response, client)
         except Exception, e:
             error("Error executing sptg: %s" % traceback.format_exc())
             raise

@@ -1,36 +1,22 @@
-from common import TestID
-from eu.emi.security.authn.x509.impl import PEMCredential
+from common import *
 from exceptions import Exception
-from jarray import array
-from java.io import FileInputStream
-from javax.net.ssl import X509ExtendedKeyManager
-from net.grinder.plugin.http import HTTPRequest
 from net.grinder.script import Test
 from net.grinder.script.Grinder import grinder
-from org.italiangrid.srm.client import SRMClient, SRMClientFactory
-import random
 import traceback
 
 error = grinder.logger.error
-info = grinder.logger.info
 debug = grinder.logger.debug
 
-props = grinder.properties
+def rmdir(surl, client, recursive):
 
-def rmdir(dirname, client, recursive):
-
-	debug("Removing directory: %s" % dirname)
-
-	res= client.srmRmdir(dirname, recursive)
-
-	debug("Directory removed")
-	
-	return res
-
+	debug("srmRmDir %s ... " % surl)
+	response = client.srmRmdir(surl, recursive)
+	debug("srmRmDir %s response is %s %s" % (surl, response.returnStatus.statusCode, response.returnStatus.explanation))
+	return response
 
 class TestRunner:
 
-	def __call__(self, dirname, client, recursive=0):
+	def __call__(self, surl, client, recursive=0):
 
 		if client is None:
 			raise Exception("Please set a non-null SRM client!")
@@ -39,7 +25,7 @@ class TestRunner:
 		test.record(rmdir)
 		
 		try:
-			return rmdir(dirname, client, recursive)
+			return rmdir(surl, client, recursive)
 		except Exception:
 			error("Error executing rmdir: %s" % traceback.format_exc())
 			raise

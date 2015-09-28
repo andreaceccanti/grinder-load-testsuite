@@ -1,4 +1,4 @@
-from common import *
+from common import Utils, TestID
 from eu.emi.security.authn.x509.impl import PEMCredential
 from exceptions import Exception
 from jarray import array
@@ -27,6 +27,11 @@ TEST_STORAGEAREA = props['common.test_storagearea']
 
 # Test specific variables
 TEST_DIRECTORY  = props['mixdav.test_directory']
+
+
+def get_url(protocol, endpoint, storagearea, path):
+    
+    return "%s://%s/webdav/%s/%s" % (protocol, endpoint, storagearea, path)
 
 def check_http_success(statusCode, expected_code, error_msg):
     

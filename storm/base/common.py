@@ -1,12 +1,7 @@
-from java.util import Properties
-from java.io import FileInputStream, BufferedInputStream
-from net.grinder.script.Grinder import grinder
 from org.italiangrid.srm.client import SRMClientFactory
 from org.italiangrid.dav.client import WebDAVClient, WebDAVClientFactory
-from org.slf4j import Logger, LoggerFactory
 import os
 import random
-
 
 class Utils:
     
@@ -50,7 +45,7 @@ class Utils:
 
         be_host = self.props["common.storm_be_hostname"]
         if be_host is None:
-            raise Exception("Missed common.storm_be_hostname value")        
+            raise Exception("Missed common.storm_be_hostname value")
         return be_host
     
     def get_storm_fe_endpoint_list(self):
@@ -77,41 +72,6 @@ class Utils:
         self.init_dav_clients()
         return random.choice(self.dav_clients)
 
-
-def get_surl(endpoint, storagearea, path):
-    
-    return "srm://%s/%s/%s" % (endpoint, storagearea, path)
-
-def get_url(protocol, endpoint, storagearea, path):
-    
-    return "%s://%s/webdav/%s/%s" % (protocol, endpoint, storagearea, path)   
-
-def get_logger(name):
-    
-    return LoggerFactory.getLogger(name)
-
-def log_surl_call_result(op_name, res, logger=None):
-
-    if logger is None:
-        logger = grinder.logger.debug
-
-    logger("%s result: %s (expl: %s)" %
-           (op_name, res.returnStatus.statusCode,
-            res.returnStatus.explanation))
-    statuses = res.getArrayOfFileStatuses().getStatusArray()
-
-    logger("surl(s) statuses:")
-    for s in statuses:
-        surl_attr_names = ["sourceSURL", "SURL", "surl"]
-        fn = [ x for x in surl_attr_names if x in dir(s) ]
-        if len(fn) == 0:
-            raise Exception("SURL access methods %s not found in %s: %s" % (s,surl_attr_names,dir(s)))
-        surl = getattr(s, fn[0])
-        logger("%s -> %s" %(surl,
-                            s.getStatus().getStatusCode()))
-
-
-
 class TestID():
     PTG       = 1
     SPTG      = 2
@@ -123,26 +83,21 @@ class TestID():
     RMDIR     = 8
     MV        = 9
     RF        = 10
-    HTTP_GET  = 11
-    HTTP_PUT  = 12
-    PD        = 13
+    PD        = 11
+    HTTP_GET  = 12
+    HTTP_PUT  = 13
     HEAD      = 14
     MKCOL     = 15
     MOVE      = 16
-    PTP_SYNC  = 17
-    DELETE    = 18
+    DELETE    = 17
 
-    PTG_SYNC  = 100
-    PTP_SYNC_PD = 101
+    PTG_TEST  = 100
+    PTP_TEST  = 101
     TXFER_IN  = 102
     TXFER_OUT = 103
-    MKRMDIR   = 104
+    MKRMDIR_TEST = 104
     ATLAS_RENAMING = 105
     MULTI_HEAD = 106
-    PTP_ASYNC_PD = 107
-    RM_FILES  = 108
+    RM_TEST   = 108
     LS_TEST   = 109
     MIX_DAV   = 110
-    PTG_ASYNC = 111
-    GET_DAV   = 112
-    PUT_DAV   = 113

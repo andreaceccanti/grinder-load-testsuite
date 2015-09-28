@@ -5,19 +5,14 @@ from net.grinder.script.Grinder import grinder
 import traceback
 
 error = grinder.logger.error
-info = grinder.logger.info
 debug = grinder.logger.debug
 
 def ls(surl, client):
 	
-	debug("Ls: %s" % surl)
-
-	res= client.srmLs([surl], 60000)
-
-	debug("Directory listed")
-
-	return res
-	
+	debug("srmLs %s ..." % surl)
+	response = client.srmLs([surl], 60000)
+	debug("srmLs %s response is %s %s" % (surl, response.returnStatus.statusCode, response.returnStatus.explanation))
+	return response
 
 class TestRunner:    
 
