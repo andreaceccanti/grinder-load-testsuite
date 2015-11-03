@@ -1,12 +1,12 @@
 #!/bin/bash
 
-export GRINDER_PROCESSES=4
-export GRINDER_THREADS=10
-export GRINDER_USE_CONSOLE=true
-export GRINDER_CONSOLE_HOST=dot1x-179.cnaf.infn.it
-export GRINDER_RUNS=0
+export GRINDER_PROCESSES=10
+export GRINDER_THREADS=5
+export GRINDER_USE_CONSOLE=false
+export GRINDER_CONSOLE_HOST=localhost
+export GRINDER_RUNS=20
 
-TEST="./storm/ptg-sync/test.properties"
+TEST="./argus/pepd/test.properties"
 
 echo "Test: $TEST"
 echo "Processes: $GRINDER_PROCESSES"
