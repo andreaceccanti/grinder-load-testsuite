@@ -1,22 +1,40 @@
 #!/bin/bash
-set -e
+set -xe
 
+policyfile=/tmp/policy.txt
 pap-admin remove-all-policies
 
-for idx in `seq 1 100`; do
-	label=`printf '%03d' $idx`
-	pap-admin add-policy --resource http://test.local.io/wn`echo $label` \
-		--obligation "http://glite.org/xacml/obligation/local-environment-map" \
-		--action ANY \
-		permit subject="CN=test0,O=IGI,C=IT"
+rm -vf $policyfile
+
+set +x
+
+for idx in `seq 1 1000`; do
+	n_permit=`printf '%03d' $idx`
+	let "n=idx+1000"
+	n_deny=`printf '%03d' $n`
 	
-	let "n=idx+100"
-	label=`printf '%03d' $n`
-	pap-admin add-policy --resource http://test.local.io/wn`echo $label` \
-		 --obligation "http://glite.org/xacml/obligation/local-environment-map" \
-		 --action ANY \
-		 deny subject="CN=test0,O=IGI,C=IT"
+	cat <<EOF >> $policyfile
+	
+resource "http://test.local.io/wn`echo $n_permit`" {
+	obligation "http://glite.org/xacml/obligation/local-environment-map" {}
+    action "ANY" {
+        rule permit { subject="CN=test0,O=IGI,C=IT" }
+    }
+}
+
+resource "http://test.local.io/wn`echo $n_deny`" {
+	obligation "http://glite.org/xacml/obligation/local-environment-map" {}
+    action "ANY" {
+        rule deny { subject="CN=test0,O=IGI,C=IT" }
+    }
+}
+EOF
+
 done
+
+set -x
+
+pap-admin add-policies-from-file $policyfile
 
 /etc/init.d/argus-pepd clearcache
 /etc/init.d/argus-pdp reloadpolicy
