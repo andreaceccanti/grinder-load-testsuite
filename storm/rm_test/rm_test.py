@@ -27,11 +27,11 @@ def get_base_dir():
     
     return "%s/%s" % (TEST_STORAGEAREA, TEST_DIRECTORY)
 
-def setup():
-    
+def setup_thread_dir():
+
     info("Setting up rm test.")
     endpoint, client = utils.get_srm_client()
-    
+
     dir_name = str(uuid.uuid4())
     base_dir = get_base_dir()
     test_dir = "%s/%s" % (base_dir, dir_name)
@@ -43,9 +43,25 @@ def setup():
     test_dir_surl = get_surl(endpoint, test_dir)
     check_success(srmMkDir(client, test_dir_surl))
     
+    info("rm setup completed successfully.")
+    
+    return test_dir
+
+def setup_run(thread_dir):
+    
+    info("Setting up rm test run.")
+    endpoint, client = utils.get_srm_client()
+    
+    dir_name = str(uuid.uuid4())
+    run_test_dir = "%s/run_%s" % (thread_dir, str(grinder.getRunNumber()))
+    
+    info("Creating rm-test run-specific test dir: " + run_test_dir)
+    run_test_dir_surl = get_surl(endpoint, run_test_dir)
+    check_success(srmMkDir(client, run_test_dir_surl))
+    
     surls = []
     for i in range(1, TEST_NUMFILES + 1):
-        surl = get_surl(endpoint, "%s/file_%s" % (test_dir, i))
+        surl = get_surl(endpoint, "%s/file_%s" % (run_test_dir, i))
         surls.append(surl)
         debug("appended: %s" % surl)
     
@@ -54,8 +70,8 @@ def setup():
     check_success(response)
     check_success(srmPd(client,surls,token))
 
-    info("rm setup completed successfully.")
-    return test_dir, surls
+    info("rm run setup completed successfully.")
+    return surls
 
 def rm_files(surls):
     
@@ -69,23 +85,28 @@ def cleanup(test_dir):
     
     info("Cleaning up for rm-test.")
     endpoint, client = utils.get_srm_client()
-    check_success(client.srmRmdir(get_surl(endpoint, test_dir), 1))
+    response = client.srmRmdir(get_surl(endpoint, test_dir), 1)
+    print_srm_op("rmdir", response)
+    check_success(response)
     info("rm-test cleanup completed successfully.")
 
 
 class TestRunner:
+
+    def __init__(self):
+        self.thread_dir = setup_thread_dir()
 
     def __call__(self):
         try:
             test = Test(TestID.RM_TEST, "StoRM srmRm files")
             test.record(rm_files)
 
-            (self.test_dir, self.surls) = setup()
-            rm_files(self.surls)
+            surls = setup_run(self.thread_dir)
+            rm_files(surls)
 
         except Exception, e:
             error("Error executing rm-files: %s" % traceback.format_exc())
     
     def __del__(self):
         
-        cleanup(self.test_dir)
+        cleanup(self.thread_dir)
