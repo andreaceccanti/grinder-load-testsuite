@@ -103,3 +103,4 @@ class TestID():
     MIX_DAV   = 110
     PTP_PD  = 111
     ATLAS_TEST = 112
+    RM_MULTI  = 113
