@@ -15,6 +15,12 @@ CONSOLE="${GRINDER_USE_CONSOLE:-false}"
 CONSOLE_HOST="${GRINDER_CONSOLE_HOST:-localhost}"
 RUNS="${GRINDER_RUNS:-1}"
 
+PROXY=${X509_USER_PROXY:-/tmp/x509up_u$(id -u)}
+
+if [ ! -e ${PROXY} ]; then
+     echo "VOMS proxy not found in: ${PROXY}"
+fi
+
 JYTHONPATH="${THIS_DIR}/../storm/base" \
      java $JAVA_VM_OPTS \
         -Dgrinder.processes="${PROCESSES}" \
@@ -25,5 +31,6 @@ JYTHONPATH="${THIS_DIR}/../storm/base" \
         -Dgrinder.logLevel="${LOG_LEVEL}" \
         -Dworker.logLevel="${WORKER_LOG_LEVEL}" \
         -Dgrinder.logDirectory="${LOG_DIR}" \
+        -Dclient.proxy="${PROXY}" \
         -classpath $CLASSPATH net.grinder.Grinder $1
 
