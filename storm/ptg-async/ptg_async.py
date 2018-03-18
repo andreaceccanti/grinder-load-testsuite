@@ -87,6 +87,7 @@ def setup(client):
 
 def do_prepare_to_get(SRM_client):
     ptg_runner = ptg.TestRunner()
+    info("ptg_runner: %s" % ptg_runner)
     ptg_runner([SURL],[],SRM_client)
 
 class TestRunner:
@@ -95,10 +96,10 @@ class TestRunner:
         self.SRMclient = SRMClientFactory.newSRMClient(FRONTEND_ENDPOINT,PROXY_FILE)
         setup(self.SRMclient)
 
-	def __call__(self):
-		try:
-			test = Test(TestID.PTG_ASYNC, "StoRM ptg-async without release or file transfer")
-			test.record(do_prepare_to_get)
-			do_prepare_to_get(self.SRMclient)
-		except Exception, e:
-			error("Error executing ptg-async: %s" % traceback.format_exc())
+    def __call__(self):
+        try:
+            test = Test(TestID.PTG_ASYNC, "StoRM ptg-async without release or file transfer")
+            test.record(do_prepare_to_get)
+            do_prepare_to_get(self.SRMclient)
+        except Exception:
+            error("Error executing ptg-async: %s" % traceback.format_exc())

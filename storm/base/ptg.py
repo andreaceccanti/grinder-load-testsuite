@@ -26,6 +26,7 @@ def ptg(surls, transport_protocols, client):
     debug("ptg done.")
     return res
 
+
 class TestRunner:
     def __call__(self, surls, transport_protocols, client):
         if client is None:
