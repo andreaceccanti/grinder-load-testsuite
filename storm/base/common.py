@@ -82,3 +82,4 @@ class TestID():
     PTG_ASYNC = 111
     GET_DAV   = 112
     PUT_DAV   = 113
+    RM_MULTI  = 114
