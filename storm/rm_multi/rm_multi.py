@@ -1,17 +1,12 @@
 from common import *
+from srm import *
 from jarray import array
 from net.grinder.script import Test
 from net.grinder.script.Grinder import grinder
-from gov.lbl.srm.StorageResourceManager import TStatusCode
-from org.italiangrid.srm.client import SRMClient, SRMClientFactory
-import ptp, sptp, pd, rm
 import traceback
 import time
+import random
 import uuid
-
-## This loads the base properties inside grinder properties
-## Should be left at the top of the script execution
-load_common_properties()
 
 error           = grinder.logger.error
 info            = grinder.logger.info
@@ -19,89 +14,101 @@ debug           = grinder.logger.debug
 
 props           = grinder.properties
 
-# Proxy authorized to write on SRM/WEBDAV endpoints
-PROXY_FILE      = get_proxy_file_path()
+utils           = Utils(grinder.properties)
 
-# Common variables:
+# Get common variables:
 TEST_STORAGEAREA = props['common.test_storagearea']
 
-## Endpoints
-FRONTEND_ENDPOINT = "https://%s:%s" % (props['common.frontend_host'],props['common.frontend_port'])
-SRM_ENDPOINT    = "srm://%s:%s" % (props['common.frontend_host'],props['common.frontend_port'])
-
 # Test specific variables
-TEST_DIRECTORY  = props['rm_multi.test_directory']
-TEST_NUMFILES   = int(props['rm_multi.test_number_of_files'])
+TEST_DIRECTORY  = props['rm_multi.directory']
+TEST_NUMFILES   = int(props['rm_multi.number_of_files'])
 
-MAX_WAITING_TIME_IN_MSEC = int(props['rm_multi.max_waiting_time_in_msec'])
+def get_base_dir():
+    
+    return "%s/%s" % (TEST_STORAGEAREA, TEST_DIRECTORY)
 
-WAITING_STATES  = [TStatusCode.SRM_REQUEST_QUEUED, TStatusCode.SRM_REQUEST_INPROGRESS]
-SRM_SUCCESS     = TStatusCode.SRM_SUCCESS
+def setup_thread_dir():
 
-SRM_CLIENT      = SRMClientFactory.newSRMClient(FRONTEND_ENDPOINT,PROXY_FILE)
+    info("Setting up rm test.")
+    endpoint, client = utils.get_srm_client()
 
-def status_code(resp):
-    return resp.returnStatus.statusCode
-
-def explanation(resp):
-    return resp.returnStatus.explanation
-
-def check_success(res, msg):
-    if status_code(res) != SRM_SUCCESS:
-        error_msg = "%s. %s (expl: %s)" % (msg, status_code(res), explanation(res))
-        raise Exception(error_msg)
-
-def create_test_directory_if_needed(SRMclient):
-    test_dir_surl = "%s/%s/%s" % (SRM_ENDPOINT, TEST_STORAGEAREA, TEST_DIRECTORY)
-    SRMclient.srmMkdir(test_dir_surl)
-
-def setup(client,num_files):
-    info("Setting up rm-multi test.")
-    # create test base directory - no check success, if exists: ok
-    create_test_directory_if_needed(client)
-    # base name for files:
-    target_file_name = str(uuid.uuid4());
-    # create num_files files
-    surls = []
-    for i in range(0, num_files):
-         target_file_surl = "%s/%s/%s/%s_%s" % (SRM_ENDPOINT, TEST_STORAGEAREA, TEST_DIRECTORY, target_file_name, i)
-         surls.append(target_file_surl)
-    debug("Creating target file(s): %s " % surls)
-    ptp_runner = ptp.TestRunner()
-    res = ptp_runner(surls, [], client)
-    sptp_runner = sptp.TestRunner()
-    while True:
-        sres = sptp_runner(res,client)
-        if status_code(sres) in WAITING_STATES:
-            time.sleep(1)
-        else:
-            break
-    check_success(sres, "Error in PtP for surl(s): %s." % surls)
-    pd_runner = pd.TestRunner()
-    res = pd_runner(surls, res.requestToken, client)
-    check_success(res, "Error in PD for surl(s): %s" % surls)
-    debug("Target file(s) successfully created.")
+    dir_name = str(uuid.uuid4())
+    base_dir = get_base_dir()
+    test_dir = "%s/%s" % (base_dir, dir_name)
+    
+    info("Creating remote test directory ... " + base_dir)
+    srmMkDir(client, get_surl(endpoint, base_dir))
+    
+    info("Creating rm-test specific test dir: " + test_dir)
+    test_dir_surl = get_surl(endpoint, test_dir)
+    check_success(srmMkDir(client, test_dir_surl))
+    
     info("rm setup completed successfully.")
+    
+    return test_dir
+
+def setup_run(thread_dir):
+    
+    info("Setting up rm test run.")
+    endpoint, client = utils.get_srm_client()
+
+    run_test_dir = "%s/run_%s" % (thread_dir, str(grinder.getRunNumber()))
+    
+    info("Creating rm-test run-specific test dir: " + run_test_dir)
+    run_test_dir_surl = get_surl(endpoint, run_test_dir)
+    check_success(srmMkDir(client, run_test_dir_surl))
+    
+    surls = []
+    for i in range(1, TEST_NUMFILES + 1):
+        surl = get_surl(endpoint, "%s/file_%s" % (run_test_dir, i))
+        surls.append(surl)
+        debug("appended: %s" % surl)
+    
+    info("Creating rm-test test dir files ... ")
+    token, response = srmPtP(client,surls,[])
+    check_success(response)
+    check_success(srmPd(client,surls,token))
+
+    info("rm run setup completed successfully.")
     return surls
 
-def rm_files(client, surls):
+def rm_files(surls):
+    
+    endpoint, client = utils.get_srm_client()
     info("Executing rm-multi test.")
-    rm_runner = rm.TestRunner()
     for surl in surls:
-        res = rm_runner([surl], client)
-        if status_code(res) != SRM_SUCCESS:
-            raise Exception("srmRm failed for %s. %s %s" % (surl, status_code(res), explanation(res)))    
+        response = srmRm(client, surls)
+        info("Rm %s - [%s %s]" % (surls, response.returnStatus.statusCode, response.returnStatus.explanation))
+        log_result_file_status(response)
+        check_success(response)
     info("Rm-multi test completed.")
 
+def cleanup(test_dir):
+    
+    info("Cleaning up for rm-test.")
+    endpoint, client = utils.get_srm_client()
+    response = client.srmRmdir(get_surl(endpoint, test_dir), 1)
+    print_srm_op("rmdir", response)
+    check_success(response)
+    info("rm-test cleanup completed successfully.")
+
+
 class TestRunner:
+
+    def __init__(self):
+        self.thread_dir = setup_thread_dir()
 
     def __call__(self):
         try:
             test = Test(TestID.RM_MULTI, "StoRM srmRm multiple calls")
             test.record(rm_files)
 
-            surls = setup(SRM_CLIENT, TEST_NUMFILES)
-            rm_files(SRM_CLIENT, surls)
+            surls = setup_run(self.thread_dir)
+            rm_files(surls)
 
         except Exception, e:
             error("Error executing rm-multi: %s" % traceback.format_exc())
+    
+    def __del__(self):
+        
+        cleanup(self.thread_dir)
