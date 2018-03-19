@@ -19,6 +19,8 @@ props          = grinder.properties
 
 utils           = Utils(grinder.properties)
 
+file_to_upload = "/tmp/prova.txt"
+
 # Common variables:
 TEST_STORAGEAREA = props['common.test_storagearea']
 
@@ -35,7 +37,15 @@ def get_base_dir():
 
 def do_prepare_to_put(client,surls):
     (token, response) = srmPtP(client, surls, [], True, SLEEP_THRESHOLD, SLEEP_TIME)
-    return token
+    statuses = response.getArrayOfFileStatuses().getStatusArray()
+    turls = []
+    surl_attr_names = ["transferURL"]
+    for s in statuses:
+        info(str(s))
+        fn = [ x for x in surl_attr_names if x in dir(s) ]
+        turl = getattr(s, fn[0])
+        turls.append(str(turl))
+    return token, turls
 
 def do_put_done(client, surls, token):
     response = srmPd(client, surls, token)
@@ -64,8 +74,10 @@ def setup_thread_dir():
 
 def ptp_pd(client,surls):
     debug("PtP on remote test files ... ")
-    token = do_prepare_to_put(client, surls)
-    grinder.sleep(TEST_FILE_LIFETIME*1000)
+    token, turls = do_prepare_to_put(client, surls)
+    for i in range(0, len(turls)):
+        os.system("globus-url-copy -vb file://" + file_to_upload + " " + turls[i])
+    #grinder.sleep(TEST_FILE_LIFETIME*1000)
     debug("Pd on remote test files ... " + token)
     do_put_done(client, surls, token)
 
