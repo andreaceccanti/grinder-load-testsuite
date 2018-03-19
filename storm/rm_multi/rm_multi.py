@@ -77,8 +77,8 @@ def rm_files(surls):
     endpoint, client = utils.get_srm_client()
     info("Executing rm-multi test.")
     for surl in surls:
-        response = srmRm(client, surls)
-        info("Rm %s - [%s %s]" % (surls, response.returnStatus.statusCode, response.returnStatus.explanation))
+        response = srmRm(client, [surl])
+        info("Rm %s - [%s %s]" % (surl, response.returnStatus.statusCode, response.returnStatus.explanation))
         log_result_file_status(response)
         check_success(response)
     info("Rm-multi test completed.")
