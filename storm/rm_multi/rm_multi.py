@@ -1,4 +1,4 @@
-from common import TestID, load_common_properties, get_proxy_file_path
+from common import *
 from jarray import array
 from net.grinder.script import Test
 from net.grinder.script.Grinder import grinder
