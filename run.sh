@@ -1,12 +1,12 @@
 #!/bin/bash
 
-export GRINDER_PROCESSES=10
-export GRINDER_THREADS=5
+export GRINDER_PROCESSES=1
+export GRINDER_THREADS=1
 export GRINDER_USE_CONSOLE=false
 export GRINDER_CONSOLE_HOST=localhost
-export GRINDER_RUNS=20
+export GRINDER_RUNS=1
 
-TEST="./argus/pepd/test.properties"
+TEST="./storm/ptg-sync/test.properties"
 
 echo "Test: $TEST"
 echo "Processes: $GRINDER_PROCESSES"
