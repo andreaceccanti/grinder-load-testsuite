@@ -15,7 +15,7 @@ CONSOLE="${GRINDER_USE_CONSOLE:-false}"
 CONSOLE_HOST="${GRINDER_CONSOLE_HOST:-localhost}"
 RUNS="${GRINDER_RUNS:-1}"
 
-JYTHONPATH="${THIS_DIR}/../storm/base" \
+JYTHONPATH="${THIS_DIR}/../storm/base:${THIS_DIR}/../argus/common" \
      java $JAVA_VM_OPTS \
         -Dgrinder.processes="${PROCESSES}" \
         -Dgrinder.threads="${THREADS}" \

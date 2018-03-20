@@ -1,10 +1,10 @@
 #!/bin/bash
 
-export GRINDER_PROCESSES=4
-export GRINDER_THREADS=10
-export GRINDER_USE_CONSOLE=true
-export GRINDER_CONSOLE_HOST=dot1x-179.cnaf.infn.it
-export GRINDER_RUNS=0
+export GRINDER_PROCESSES=1
+export GRINDER_THREADS=1
+export GRINDER_USE_CONSOLE=false
+export GRINDER_CONSOLE_HOST=localhost
+export GRINDER_RUNS=1
 
 TEST="./storm/ptg-sync/test.properties"
 
