@@ -17,4 +17,4 @@ WORKDIR /home/tester
 
 USER tester
 
-CMD /home/tester/run.sh
+ENTRYPOINT ["/home/tester/run.sh"]
