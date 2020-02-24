@@ -11,10 +11,6 @@ pipeline {
 
   triggers { cron('@daily') }
 
-  environment {
-    DOCKER_REGISTRY_HOST = "${env.DOCKER_REGISTRY_HOST}"
-  }
-
   parameters {
     string(defaultValue: "git://github.com/italiangrid/grinder-load-testsuite.git", description: '', name: 'TESTSUITE_REPO')
     choice(choices: 'develop\nmaster', description: '', name: 'TESTSUITE_BRANCH')
