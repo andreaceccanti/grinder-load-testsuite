@@ -1,0 +1,87 @@
+#!/usr/bin/env groovy
+def image, name, envvars
+
+pipeline {
+  agent { label 'docker' }
+
+  options {
+    timeout(time: 1, unit: 'HOURS')
+    buildDiscarder(logRotator(numToKeepStr: '5'))
+  }
+
+  triggers { cron('@daily') }
+
+  environment {
+    DOCKER_REGISTRY_HOST = "${env.DOCKER_REGISTRY_HOST}"
+  }
+
+  parameters {
+    string(defaultValue: "git://github.com/italiangrid/grinder-load-testsuite.git", description: '', name: 'TESTSUITE_REPO')
+    choice(choices: 'develop\nmaster', description: '', name: 'TESTSUITE_BRANCH')
+    string(defaultValue: "test.vo", description: '', name: 'PROXY_VONAME')
+    string(defaultValue: "test0", description: '', name: 'PROXY_USER')
+    string(defaultValue: "2", description: '', name: 'GRINDER_PROCESSES')
+    string(defaultValue: "10", description: '', name: 'GRINDER_THREADS')
+    string(defaultValue: "100", description: '', name: 'GRINDER_RUNS')
+    booleanParam(defaultValue: false, description: '', name: 'GRINDER_CONSOLE_USE')
+    string(defaultValue: "localhost", description: '', name: 'GRINDER_CONSOLE_HOST')
+    choice(choices: 'rm_multi\nrm_test\nmkrmdir_test\nptg_test\nptp_test\nptp_pd\nls_test\nft_in\nft_out\nmixdav\natlas_renaming\natlas_nested', description: '', name: 'GRINDER_TEST')
+    string(defaultValue: "omii006-vm03.cnaf.infn.it:8444", description: '', name: 'COMMON_STORM_FE_ENDPOINT_LIST')
+    string(defaultValue: "omii006-vm03.cnaf.infn.it:8443", description: '', name: 'COMMON_STORM_DAV_ENDPOINT_LIST')
+    string(defaultValue: "test.vo", description: '', name: 'COMMON_TEST_STORAGEAREA')
+    choice(choices: "INFO\nWARN\nERROR\nDEBUG", description: '', name: 'LOGGING_LEVEL')
+  }
+
+  environment {
+    STORM_TESTSUITE_CONTAINER_NAME = "storm-load-testsuite-${BUILD_TAG}"
+    TESTSUITE_REPO = "${params.TESTSUITE_REPO}"
+    TESTSUITE_BRANCH = "${params.TESTSUITE_BRANCH}"
+    PROXY_VONAME = "${params.PROXY_VONAME}"
+    PROXY_USER = "${params.PROXY_USER}"
+    GRINDER_PROCESSES = "${params.GRINDER_PROCESSES}"
+    GRINDER_THREADS = "${params.GRINDER_THREADS}"
+    GRINDER_RUNS = "${params.GRINDER_RUNS}"
+    GRINDER_CONSOLE_USE = "${params.GRINDER_CONSOLE_USE}"
+    GRINDER_CONSOLE_HOST = "${params.GRINDER_CONSOLE_HOST}"
+    GRINDER_TEST = "${params.GRINDER_TEST}"
+    COMMON_STORM_FE_ENDPOINT_LIST = "${params.COMMON_STORM_FE_ENDPOINT_LIST}"
+    COMMON_STORM_DAV_ENDPOINT_LIST = "${params.COMMON_STORM_DAV_ENDPOINT_LIST}"
+    COMMON_TEST_STORAGEAREA = "${params.COMMON_TEST_STORAGEAREA}"
+    LOGGING_LEVEL = "${params.LOGGING_LEVEL}"
+
+    TTY_OPTS = "-T"
+    OUTPUT_DIRECTORY = "reports-${BUILD_TAG}"
+  }
+
+  stages {
+    stage('run') {
+      steps {
+        script {
+          echo "TESTSUITE_BRANCH=${env.TESTSUITE_BRANCH}"
+          echo "TTY_OPTS=${env.TTY_OPTS}"
+          dir("compose") {
+            sh "docker-compose down"
+            sh "docker-compose up"
+            sh "docker logs ${STORM_TESTSUITE_CONTAINER_NAME}>grinder.log"
+            sh "docker-compose down"
+            archive 'grinder.log'
+          }
+        }
+      }
+    }
+  }
+
+  post {
+    failure {
+      slackSend color: 'danger', message: "${env.JOB_NAME} - #${env.BUILD_NUMBER} Failure (<${env.BUILD_URL}|Open>)"
+    }
+
+    changed {
+      script{
+        if('SUCCESS'.equals(currentBuild.currentResult)) {
+          slackSend color: 'good', message: "${env.JOB_NAME} - #${env.BUILD_NUMBER} Back to normal (<${env.BUILD_URL}|Open>)"
+        }
+      }
+    }
+  }
+}

@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker build -t italiangrid/grinder .
+docker build -t italiangrid/storm-load-testsuite .

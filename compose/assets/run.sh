@@ -23,10 +23,10 @@ export LOGGING_LEVEL="${LOGGING_LEVEL:-INFO}"
 export CERT_DIR="/usr/share/igi-test-ca"
 export PROPFILE="/etc/storm/grinder/testsuite.properties"
 
-export PROXYFILE="/certs/proxy"
+export PROXYFILE="/assets/proxy"
 PROPFILE="/tmp/testsuite.properties"
 
-envsubst <testsuite.properties.template >$PROPFILE
+envsubst </assets/testsuite.properties.template >$PROPFILE
 
 cat $PROPFILE
 
@@ -66,7 +66,7 @@ env | grep "GRINDER"
 #write out current crontab
 crontab -l > mycron
 #echo new cron into cron file
-echo "*/10 * * * * /home/testers/checkproxy.sh" >> mycron
+echo "*/10 * * * * /assets/checkproxy.sh" >> mycron
 #install new cron file
 crontab mycron
 rm mycron

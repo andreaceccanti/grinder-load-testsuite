@@ -1,0 +1,38 @@
+version: '3.5'
+
+volumes:
+  trustanchors:
+
+services:
+
+  trust:
+    image: indigoiam/trustanchors
+    environment:
+      - FORCE_TRUST_ANCHORS_UPDATE=1
+    volumes:
+      - trustanchors:/etc/grid-security/certificates
+
+  storm-load-testsuite:
+    image: italiangrid/storm-load-testsuite
+    container_name: ${STORM_TESTSUITE_CONTAINER_NAME}
+    entrypoint: sh /assets/run.sh
+    environment:
+      - TESTSUITE_REPO
+      - TESTSUITE_BRANCH
+      - PROXY_VONAME
+      - PROXY_USER
+      - GRINDER_PROCESSES
+      - GRINDER_THREADS
+      - GRINDER_RUNS
+      - GRINDER_CONSOLE_USE
+      - GRINDER_CONSOLE_HOST
+      - GRINDER_TEST
+      - COMMON_STORM_FE_ENDPOINT_LIST
+      - COMMON_STORM_DAV_ENDPOINT_LIST
+      - COMMON_TEST_STORAGEAREA
+      - LOGGING_LEVEL
+    depends_on:
+      - trust
+    volumes:
+      - trustanchors:/etc/grid-security/certificates
+      - ./assets:/assets

@@ -1,20 +1,11 @@
-FROM  italiangrid/storm-testsuite
+FROM  italiangrid/storm-testsuite:nightly
 
 USER root
 
 COPY setup.sh .
-COPY run.sh .
-COPY checkproxy.sh .
-COPY testsuite.properties.template .
-
 RUN chmod +x setup.sh
-RUN chmod +x run.sh
-RUN chmod +x checkproxy.sh
-
 RUN ./setup.sh
 
 WORKDIR /home/tester
 
 USER tester
-
-ENTRYPOINT ["/home/tester/run.sh"]
