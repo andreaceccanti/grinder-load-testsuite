@@ -1,5 +1,4 @@
 #!/usr/bin/env groovy
-def image, name, envvars
 
 pipeline {
   agent { label 'docker' }
@@ -16,9 +15,9 @@ pipeline {
     choice(choices: 'develop\nmaster', description: '', name: 'TESTSUITE_BRANCH')
     string(defaultValue: "test.vo", description: '', name: 'PROXY_VONAME')
     string(defaultValue: "test0", description: '', name: 'PROXY_USER')
-    string(defaultValue: "2", description: '', name: 'GRINDER_PROCESSES')
-    string(defaultValue: "10", description: '', name: 'GRINDER_THREADS')
-    string(defaultValue: "100", description: '', name: 'GRINDER_RUNS')
+    string(defaultValue: "1", description: '', name: 'GRINDER_PROCESSES')
+    string(defaultValue: "2", description: '', name: 'GRINDER_THREADS')
+    string(defaultValue: "10", description: '', name: 'GRINDER_RUNS')
     booleanParam(defaultValue: false, description: '', name: 'GRINDER_CONSOLE_USE')
     string(defaultValue: "localhost", description: '', name: 'GRINDER_CONSOLE_HOST')
     choice(choices: 'rm_multi\nrm_test\nmkrmdir_test\nptg_test\nptp_test\nptp_pd\nls_test\nft_in\nft_out\nmixdav\natlas_renaming\natlas_nested', description: '', name: 'GRINDER_TEST')
@@ -29,7 +28,7 @@ pipeline {
   }
 
   environment {
-    STORM_TESTSUITE_CONTAINER_NAME = "storm-load-testsuite-${BUILD_TAG}"
+    STORM_TESTSUITE_CONTAINER_NAME = "${BUILD_TAG}"
     TESTSUITE_REPO = "${params.TESTSUITE_REPO}"
     TESTSUITE_BRANCH = "${params.TESTSUITE_BRANCH}"
     PROXY_VONAME = "${params.PROXY_VONAME}"
@@ -44,9 +43,6 @@ pipeline {
     COMMON_STORM_DAV_ENDPOINT_LIST = "${params.COMMON_STORM_DAV_ENDPOINT_LIST}"
     COMMON_TEST_STORAGEAREA = "${params.COMMON_TEST_STORAGEAREA}"
     LOGGING_LEVEL = "${params.LOGGING_LEVEL}"
-
-    TTY_OPTS = "-T"
-    OUTPUT_DIRECTORY = "reports-${BUILD_TAG}"
   }
 
   stages {
@@ -54,13 +50,12 @@ pipeline {
       steps {
         script {
           echo "TESTSUITE_BRANCH=${env.TESTSUITE_BRANCH}"
-          echo "TTY_OPTS=${env.TTY_OPTS}"
           dir("compose") {
             sh "docker-compose down"
             sh "docker-compose up"
             sh "docker logs ${STORM_TESTSUITE_CONTAINER_NAME}>grinder.log"
             sh "docker-compose down"
-            archive 'grinder.log'
+            archiveArtifacts 'grinder.log'
           }
         }
       }
