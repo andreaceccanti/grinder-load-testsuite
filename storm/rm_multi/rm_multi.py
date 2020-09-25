@@ -20,7 +20,7 @@ utils           = Utils(grinder.properties)
 TEST_STORAGEAREA = props['common.test_storagearea']
 
 # Test specific variables
-TEST_DIRECTORY  = props['rm_multi.directory']
+TEST_DIRECTORY  = props['rm_multi.test_directory']
 TEST_NUMFILES   = int(props['rm_multi.number_of_files'])
 
 def get_base_dir():
