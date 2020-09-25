@@ -74,3 +74,7 @@ ptp_pd.numfiles = 10
 #Rm_multi
 rm_multi.test_directory = rm_multi_files
 rm_multi.number_of_files=50
+
+# srm_all
+srm_all.test_directory = srm_all
+srm_all.number_of_files=50

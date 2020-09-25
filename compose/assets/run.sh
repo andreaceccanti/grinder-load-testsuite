@@ -6,16 +6,16 @@ export TESTSUITE_BRANCH="${TESTSUITE_BRANCH:-develop}"
 export PROXY_VONAME="${PROXY_VONAME:-test.vo}"
 export PROXY_USER="${PROXY_USER:-test0}"
 
-export GRINDER_PROCESSES="${GRINDER_PROCESSES:-1}"
-export GRINDER_THREADS="${GRINDER_THREADS:-1}"
-export GRINDER_RUNS="${GRINDER_RUNS:-1}"
+export GRINDER_PROCESSES="${GRINDER_PROCESSES:-4}"
+export GRINDER_THREADS="${GRINDER_THREADS:-10}"
+export GRINDER_RUNS="${GRINDER_RUNS:-10000}"
 export GRINDER_CONSOLE_USE="${GRINDER_CONSOLE_USE:-false}"
 export GRINDER_CONSOLE_HOST="${GRINDER_CONSOLE_HOST:-localhost}"
-GRINDER_TEST="${GRINDER_TEST:-mixdav}"
+GRINDER_TEST="${GRINDER_TEST:-srm_all}"
 export GRINDER_SCRIPT="./storm/$GRINDER_TEST/$GRINDER_TEST.py"
 
-export COMMON_STORM_FE_ENDPOINT_LIST="${COMMON_STORM_FE_ENDPOINT_LIST:-omii006-vm03.cnaf.infn.it:8444}"
-export COMMON_STORM_DAV_ENDPOINT_LIST="${COMMON_STORM_DAV_ENDPOINT_LIST:-omii006-vm03.cnaf.infn.it:8443}"
+export COMMON_STORM_FE_ENDPOINT_LIST="${COMMON_STORM_FE_ENDPOINT_LIST:-storm-test.cr.cnaf.infn.it:8444}"
+export COMMON_STORM_DAV_ENDPOINT_LIST="${COMMON_STORM_DAV_ENDPOINT_LIST:-storm-test.cr.cnaf.infn.it:8443}"
 export COMMON_TEST_STORAGEAREA="${COMMON_TEST_STORAGEAREA:-test.vo}"
 
 export LOGGING_LEVEL="${LOGGING_LEVEL:-INFO}"
@@ -41,11 +41,19 @@ then
   export ENABLE_CHECKPROXY=false
 else
 
-  echo "Copy user certificate and key to globus directory ..."
+  echo "Create globus directory ..."
+  rm -rf /home/tester/.globus
+  mkdir -p /home/tester/.globus
+  chown tester:tester -R /home/tester/.globus
+  ls -latr /home/tester/.globus
+  echo "Copy user certificate into globus directory ..."
   cp $CERT_DIR/${PROXY_USER}.cert.pem /home/tester/.globus/usercert.pem
   chmod 644 /home/tester/.globus/usercert.pem
+  ls -latr /home/tester/.globus
+  echo "Copy user key into globus directory ..."
   cp $CERT_DIR/${PROXY_USER}.key.pem /home/tester/.globus/userkey.pem
   chmod 400 /home/tester/.globus/userkey.pem
+  ls -latr /home/tester/.globus
 
   echo "Create VOMS proxy for $proxy_vo VO and user $proxy_user ..."
   echo pass|voms-proxy-init -pwstdin --voms ${PROXY_VONAME}
